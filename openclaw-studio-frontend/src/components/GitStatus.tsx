@@ -46,7 +46,17 @@ export const GitStatus: React.FC<GitStatusProps> = ({ caseId }) => {
   }
 
   const { status, repo_info } = data;
-  const isDirty = status.is_dirty || repo_info.is_dirty;
+  
+  // 检查 status 和 repo_info 是否存在
+  if (!status || !repo_info) {
+    return (
+      <Card title="Git 状态">
+        <Text type="warning">Git 状态数据不完整</Text>
+      </Card>
+    );
+  }
+
+  const isDirty = status?.is_dirty || repo_info?.is_dirty || false;
 
   return (
     <Card
@@ -64,7 +74,7 @@ export const GitStatus: React.FC<GitStatusProps> = ({ caseId }) => {
           <Space>
             <Text strong>当前分支：</Text>
             <Tag color="blue" icon={<BranchesOutlined />}>
-              {status.branch}
+              {status?.branch || repo_info?.current_branch || '未知'}
             </Tag>
             {isDirty && (
               <Tag color="orange" icon={<ExclamationCircleOutlined />}>
@@ -128,7 +138,7 @@ export const GitStatus: React.FC<GitStatusProps> = ({ caseId }) => {
             <div>
               <Text strong>文件状态：</Text>
               <Space direction="vertical" size="small" style={{ marginTop: 8, width: '100%' }}>
-                {status.staged_files.length > 0 && (
+                {status?.staged_files && status.staged_files.length > 0 && (
                   <div>
                     <Text type="success">已暂存 ({status.staged_files.length})：</Text>
                     <div style={{ marginLeft: 16, marginTop: 4 }}>
@@ -145,7 +155,7 @@ export const GitStatus: React.FC<GitStatusProps> = ({ caseId }) => {
                     </div>
                   </div>
                 )}
-                {status.unstaged_files.length > 0 && (
+                {status?.unstaged_files && status.unstaged_files.length > 0 && (
                   <div>
                     <Text type="warning">未暂存 ({status.unstaged_files.length})：</Text>
                     <div style={{ marginLeft: 16, marginTop: 4 }}>
@@ -162,7 +172,7 @@ export const GitStatus: React.FC<GitStatusProps> = ({ caseId }) => {
                     </div>
                   </div>
                 )}
-                {status.untracked_files.length > 0 && (
+                {status?.untracked_files && status.untracked_files.length > 0 && (
                   <div>
                     <Text type="secondary">未跟踪 ({status.untracked_files.length})：</Text>
                     <div style={{ marginLeft: 16, marginTop: 4 }}>
