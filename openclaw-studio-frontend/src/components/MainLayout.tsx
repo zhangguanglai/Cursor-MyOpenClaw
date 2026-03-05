@@ -44,9 +44,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             style={{ height: '100%', borderRight: 0 }}
           />
         </Sider>
-        <Layout style={{ padding: '0 24px 24px' }}>
+        <Layout.Content style={{ padding: '24px', minHeight: '100vh' }}>
           {children}
-        </Layout>
+        </Layout.Content>
       </Layout>
     </Layout>
   )
