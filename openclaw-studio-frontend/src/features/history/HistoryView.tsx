@@ -91,6 +91,32 @@ const HistoryView = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            href: '/cases',
+            title: (
+              <>
+                <HomeOutlined />
+                <span>需求中心</span>
+              </>
+            ),
+          },
+          {
+            title: caseData?.title || `案例 ${caseId}`,
+          },
+          {
+            title: '历史视图',
+          },
+        ]}
+      />
+      {caseData && (
+        <Card style={{ marginBottom: 16 }}>
+          <Title level={4}>{caseData.title}</Title>
+          <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+        </Card>
+      )}
       <Card title="开发历史时间线" style={{ marginBottom: 24 }}>
         <HistoryFilters value={filters} onChange={setFilters} />
       </Card>
