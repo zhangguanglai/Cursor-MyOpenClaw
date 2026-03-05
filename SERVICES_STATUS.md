@@ -1,137 +1,92 @@
-# 服务状态报告
+# 服务启动状态
 
-## 🚀 服务启动情况
+## ✅ 服务已成功启动
 
-### 后端 API 服务
-- **状态**: ✅ 已启动（后台运行）
+### 后端服务
+- **状态**: ✅ 运行正常
 - **地址**: http://localhost:8000
 - **API 文档**: http://localhost:8000/docs
 - **健康检查**: http://localhost:8000/health
-- **启动命令**: `python start_backend.py`
 
-### 前端开发服务器
-- **状态**: ✅ 已启动（后台运行）
+### 前端服务
+- **状态**: ✅ 运行正常
 - **地址**: http://localhost:5173
-- **启动命令**: `cd openclaw-studio-frontend && npm run dev`
 
-## 📋 快速测试
+## 📝 启动说明
 
-### 1. 检查后端服务
-```bash
-# 方式1: 使用测试脚本
-python test_integration.py
+### 启动方式
 
-# 方式2: 使用浏览器
-# 访问 http://localhost:8000/health
-# 应该看到: {"status": "healthy", "timestamp": "..."}
-```
-
-### 2. 检查前端服务
-```bash
-# 使用浏览器访问
-# http://localhost:5173
-# 应该看到 OpenClaw Studio 首页
-```
-
-### 3. 测试完整流程
-1. 访问 http://localhost:5173/cases
-2. 点击"创建案例"按钮
-3. 填写表单并提交
-4. 查看案例列表
-5. 点击案例进入详情页
-6. 测试生成计划功能
-
-## 🔧 服务管理
-
-### 停止服务
-
-#### Windows PowerShell
+#### 方式 1: 使用启动脚本（推荐）
 ```powershell
-# 查找进程
-Get-Process | Where-Object {$_.ProcessName -like "*python*" -or $_.ProcessName -like "*node*"}
-
-# 停止 Python 进程（后端）
-Get-Process python | Stop-Process
-
-# 停止 Node 进程（前端）
-Get-Process node | Stop-Process
+# 在项目根目录执行
+python start_backend.py
 ```
 
-#### 手动停止
-- 后端: 在运行 `start_backend.py` 的终端按 `Ctrl+C`
-- 前端: 在运行 `npm run dev` 的终端按 `Ctrl+C`
-
-### 重启服务
-
-```bash
-# 重启后端
-python start_backend.py
-
-# 重启前端
-cd openclaw-studio-frontend
+```powershell
+# 在 openclaw-studio-frontend 目录执行
 npm run dev
 ```
 
-## 📊 服务日志
-
-### 后端日志
-后端服务会在终端输出日志，包括：
-- 请求日志
-- 错误信息
-- Agent 调用记录
-
-### 前端日志
-前端服务会在终端输出：
-- Vite 构建信息
-- HMR (Hot Module Replacement) 更新
-- 错误信息
-
-## 🐛 常见问题
-
-### 1. 端口被占用
-
-**后端 (8000)**
-```bash
-# Windows
-netstat -ano | findstr :8000
-taskkill /PID <进程ID> /F
+#### 方式 2: 使用 PowerShell 脚本
+```powershell
+# 在项目根目录执行
+.\start_services.ps1
 ```
 
-**前端 (5173)**
+### 停止服务
+
+- **后端**: 在运行后端服务的终端窗口按 `Ctrl+C`
+- **前端**: 在运行前端服务的终端窗口按 `Ctrl+C`
+
+## 🔍 验证服务
+
+### 检查后端服务
 ```bash
-# Vite 会自动尝试下一个端口
-# 或手动指定端口
-npm run dev -- --port 5174
+# 健康检查
+curl http://localhost:8000/health
+
+# API 文档
+# 浏览器访问: http://localhost:8000/docs
 ```
 
-### 2. 无法连接到后端
+### 检查前端服务
+```bash
+# 浏览器访问: http://localhost:5173
+```
 
-- 检查后端服务是否正在运行
-- 检查防火墙设置
-- 确认端口 8000 未被占用
+## 📊 服务信息
 
-### 3. CORS 错误
+- **后端端口**: 8000
+- **前端端口**: 5173
+- **后端框架**: FastAPI (Uvicorn)
+- **前端框架**: React + Vite
 
-- 确认后端 CORS 配置正确（`openclaw_studio/api/main.py`）
-- 检查前端 `.env` 文件中的 `VITE_API_BASE_URL`
+## ⚠️ 注意事项
 
-### 4. API Key 错误
+1. 确保端口 8000 和 5173 未被其他程序占用
+2. 后端服务需要 Python 环境和所有依赖包
+3. 前端服务需要 Node.js 和 npm 环境
+4. 首次启动前端需要运行 `npm install` 安装依赖
 
-- 检查环境变量是否设置
-- 确认 API Key 是否有效
-- 查看后端日志中的错误信息
+## 🐛 故障排查
 
-## 📝 测试清单
+### 后端服务无法启动
+1. 检查 Python 环境是否正确
+2. 检查依赖是否安装: `pip install -r requirements.txt`
+3. 检查端口 8000 是否被占用
+4. 查看后端启动日志中的错误信息
 
-- [ ] 后端健康检查通过
-- [ ] 前端页面正常加载
-- [ ] 可以创建案例
-- [ ] 可以查看案例列表
-- [ ] 可以生成计划
-- [ ] 可以查看补丁
-- [ ] 可以生成测试建议
-- [ ] 可以查看历史记录
+### 前端服务无法启动
+1. 检查 Node.js 和 npm 是否安装
+2. 检查依赖是否安装: `cd openclaw-studio-frontend && npm install`
+3. 检查端口 5173 是否被占用
+4. 查看前端启动日志中的错误信息
+
+### 前后端无法通信
+1. 检查后端 CORS 配置
+2. 检查前端 API 地址配置
+3. 检查防火墙设置
 
 ---
 
-**最后更新**: 2026-03-05 19:50:00
+**最后更新**: 2026-03-06

@@ -24,7 +24,7 @@ export const useTriggerPlanningMutation = (caseId: string) => {
 
 // 获取计划
 export const useCasePlanQuery = (caseId: string) => {
-  return useQuery<PlanningResponseOut>({
+  return useQuery<PlanningResponseOut | null>({
     queryKey: ['planning', caseId],
     queryFn: async () => {
       try {
@@ -33,7 +33,7 @@ export const useCasePlanQuery = (caseId: string) => {
       } catch (error: any) {
         // 如果是 404，说明计划不存在，返回 null 而不是抛出错误
         if (error.response?.status === 404) {
-          return null as any;
+          return null;
         }
         throw error;
       }
