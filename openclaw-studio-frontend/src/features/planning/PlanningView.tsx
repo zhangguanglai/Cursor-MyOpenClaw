@@ -8,6 +8,7 @@ import type { TaskOut } from '../../services/types'
 import { MarkdownEditor } from '../../components/MarkdownEditor'
 import { TaskTable, TaskDetailModal } from './TaskTable'
 import { PlanRenderer } from './PlanRenderer'
+import GitStatus from '../../components/GitStatus'
 
 const { Title } = Typography
 
@@ -130,12 +131,15 @@ const PlanningView = () => {
           },
         ]}
       />
-      {caseData && (
-        <Card style={{ marginBottom: 16 }}>
-          <Title level={4}>{caseData.title}</Title>
-          <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
-        </Card>
-      )}
+              {caseData && (
+                <>
+                  <Card style={{ marginBottom: 16 }}>
+                    <Title level={4}>{caseData.title}</Title>
+                    <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+                  </Card>
+                  {caseId && <GitStatus caseId={caseId} />}
+                </>
+              )}
       <Card
         title="实现计划"
         extra={

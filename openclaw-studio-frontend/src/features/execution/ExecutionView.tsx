@@ -22,6 +22,7 @@ import { useCaseQuery } from '../../services/cases'
 import type { PatchOut } from '../../services/types'
 import DiffPreview from '../../components/DiffPreview'
 import { useQueryClient } from '@tanstack/react-query'
+import GitStatus from '../../components/GitStatus'
 
 const { Text, Paragraph, Title } = Typography
 const { Option } = Select
@@ -153,12 +154,15 @@ const ExecutionView = () => {
           },
         ]}
       />
-      {caseData && (
-        <Card style={{ marginBottom: 16 }}>
-          <Title level={4}>{caseData.title}</Title>
-          <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
-        </Card>
-      )}
+              {caseData && (
+                <>
+                  <Card style={{ marginBottom: 16 }}>
+                    <Title level={4}>{caseData.title}</Title>
+                    <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+                  </Card>
+                  {caseId && <GitStatus caseId={caseId} />}
+                </>
+              )}
       {/* 生成补丁区域 */}
       <Card title="生成补丁" style={{ marginBottom: 24 }}>
         <Space direction="vertical" style={{ width: '100%' }}>
