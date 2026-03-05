@@ -33,6 +33,10 @@ async def generate_code(
         raise HTTPException(status_code=404, detail="Task not found")
     
     try:
+        # 检查案例状态，如果是 planning，则更新为 coding
+        if case.status == "planning":
+            case_manager.update_case_status(case_id, "coding")
+        
         # 构建 CodingRequest
         coding_request = {
             "task": {
@@ -57,6 +61,11 @@ async def generate_code(
         
         # 更新任务状态
         case_manager.update_task_status(task_id, "completed")
+        
+        # 检查是否所有任务都已完成，如果是则更新案例状态为 completed
+        all_tasks = case_manager.get_tasks(case_id)
+        if all_tasks and all(task.status == "completed" for task in all_tasks):
+            case_manager.update_case_status(case_id, "completed")
         
         # 记录 Agent 调用
         case_manager.record_agent_run(

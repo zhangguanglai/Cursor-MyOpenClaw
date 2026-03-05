@@ -32,6 +32,7 @@ const RequirementCenter = () => {
       coding: 'processing',
       testing: 'warning',
       completed: 'success',
+      cancelled: 'default',
     }
     return colorMap[status] || 'default'
   }
@@ -43,6 +44,7 @@ const RequirementCenter = () => {
       coding: '编码中',
       testing: '测试中',
       completed: '已完成',
+      cancelled: '已取消',
     }
     return textMap[status] || status
   }
