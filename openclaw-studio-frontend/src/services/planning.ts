@@ -33,3 +33,37 @@ export const useCasePlanQuery = (caseId: string) => {
     enabled: !!caseId,
   });
 };
+
+// 更新计划
+export const useUpdatePlanMutation = (caseId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (planMarkdown: string) => {
+      const response = await apiClient.put(`/api/v1/cases/${caseId}/plan`, {
+        plan_markdown: planMarkdown,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['planning', caseId] });
+    },
+  });
+};
+
+// 更新任务状态
+export const useUpdateTaskStatusMutation = (caseId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ taskId, status }: { taskId: string; status: 'pending' | 'completed' }) => {
+      const response = await apiClient.put(`/api/v1/cases/${caseId}/tasks/${taskId}/status`, {
+        status,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['planning', caseId] });
+    },
+  });
+};

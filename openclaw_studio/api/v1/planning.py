@@ -67,6 +67,7 @@ async def trigger_planning(
         ]
         
         return PlanningResponseOut(
+            plan_id=plan.id,
             plan_markdown=result["plan_markdown"],
             tasks=tasks
         )
@@ -74,7 +75,7 @@ async def trigger_planning(
         raise HTTPException(status_code=500, detail=f"Planning failed: {str(e)}")
 
 
-@router.get("/{case_id}/planning", response_model=PlanningResponseOut)
+@router.get("/{case_id}/plan", response_model=PlanningResponseOut)
 async def get_planning(
     case_id: str,
     case_manager: CaseManager = Depends(get_case_manager),
@@ -111,10 +112,64 @@ async def get_planning(
             title=task.title,
             description=task.description or "",
             related_files=related_files,
-            risk_level=task.risk_level or "medium"
+            risk_level=task.risk_level or "medium",
+            status=task.status or "pending"
         ))
     
+    plan = plan_data.get("plan")
     return PlanningResponseOut(
+        plan_id=plan.id if plan else "",
         plan_markdown=plan_data.get("markdown", ""),
         tasks=tasks
     )
+
+
+@router.put("/{case_id}/plan")
+async def update_plan(
+    case_id: str,
+    request: dict,
+    case_manager: CaseManager = Depends(get_case_manager),
+):
+    """更新计划内容"""
+    case = case_manager.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    plan_markdown = request.get("plan_markdown", "")
+    if not plan_markdown:
+        raise HTTPException(status_code=400, detail="plan_markdown is required")
+    
+    # 更新计划文件
+    plan_data = case_manager.get_plan(case_id)
+    if plan_data:
+        plan = plan_data.get("plan")
+        if plan:
+            # 更新计划 markdown
+            case_storage = case_manager.storage
+            case_storage.save_plan_markdown(case_id, plan_markdown)
+            
+            return {"message": "Plan updated successfully"}
+    
+    raise HTTPException(status_code=404, detail="Plan not found")
+
+
+@router.put("/{case_id}/tasks/{task_id}/status")
+async def update_task_status(
+    case_id: str,
+    task_id: str,
+    request: dict,
+    case_manager: CaseManager = Depends(get_case_manager),
+):
+    """更新任务状态"""
+    case = case_manager.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    status = request.get("status")
+    if status not in ["pending", "completed"]:
+        raise HTTPException(status_code=400, detail="status must be 'pending' or 'completed'")
+    
+    # 更新任务状态
+    case_manager.update_task_status(task_id, status)
+    
+    return {"message": "Task status updated successfully"}

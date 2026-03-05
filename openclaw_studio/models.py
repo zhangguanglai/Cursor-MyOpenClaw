@@ -45,10 +45,12 @@ class TaskOut(BaseModel):
     description: str
     related_files: List[str] = []
     risk_level: str = "medium"
+    status: Optional[str] = "pending"
 
 
 class PlanningResponseOut(BaseModel):
     """规划响应模型"""
+    plan_id: str = Field(..., description="计划 ID")
     plan_markdown: str = Field(..., description="计划 Markdown 内容")
     tasks: List[TaskOut] = Field(default_factory=list, description="任务列表")
 

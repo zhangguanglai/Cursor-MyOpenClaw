@@ -33,6 +33,7 @@ export interface TaskOut {
   description: string;
   related_files: string[];
   risk_level: string;
+  status?: 'pending' | 'completed';
 }
 
 export interface PlanningResponseOut {
