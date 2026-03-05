@@ -4,10 +4,11 @@
  * 统一管理 API 请求配置，包括 baseURL、timeout、拦截器等
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios from 'axios';
+import type { AxiosError } from 'axios';
 
 // 创建 axios 实例
-const apiClient: AxiosInstance = axios.create({
+const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   timeout: 30000,
   headers: {
