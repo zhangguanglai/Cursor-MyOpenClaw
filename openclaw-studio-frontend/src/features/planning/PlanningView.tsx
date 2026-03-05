@@ -127,7 +127,7 @@ const PlanningView = () => {
         ) : (
           <Alert
             message="暂无计划"
-            description="请点击"生成计划"按钮来生成实现计划"
+            description="请点击「生成计划」按钮来生成实现计划"
             type="info"
             showIcon
           />
