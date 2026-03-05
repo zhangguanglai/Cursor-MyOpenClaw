@@ -13,12 +13,16 @@ import {
   message,
   Checkbox,
   Select,
+  Breadcrumb,
+  Spin,
 } from 'antd'
+import { HomeOutlined } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useGenerateTestMutation, useGetTestResultsQuery } from '../../services/testing'
+import { useCaseQuery } from '../../services/cases'
 import type { TestResponseOut } from '../../services/types'
 
 const { Title, Text, Paragraph } = Typography
@@ -48,7 +52,7 @@ const parseChecklist = (raw: string[]): { text: string; checked: boolean }[] => 
 
 const TestingView = () => {
   const { caseId } = useParams<{ caseId: string }>()
-  const { data: caseData } = useCaseQuery(caseId || '')
+  const { data: caseData, isLoading: isCaseLoading, error: caseError } = useCaseQuery(caseId || '')
   const [checklistState, setChecklistState] = useState<{ text: string; checked: boolean }[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [severityFilter, setSeverityFilter] = useState<string>('all')
@@ -58,6 +62,42 @@ const TestingView = () => {
 
   // Generate mutation
   const generateMutation = useGenerateTestMutation(caseId || '')
+
+  // 错误处理
+  if (caseError) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="加载案例失败"
+          description={caseError instanceof Error ? caseError.message : '未知错误'}
+          type="error"
+          showIcon
+        />
+      </div>
+    )
+  }
+
+  if (!caseId) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="案例 ID 不存在"
+          description="请从需求中心选择一个案例"
+          type="warning"
+          showIcon
+        />
+      </div>
+    )
+  }
+
+  if (isCaseLoading) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <Spin size="large" />
+        <p style={{ marginTop: 16 }}>加载案例信息...</p>
+      </div>
+    )
+  }
 
   // Initialize checklist from API or localStorage
   useEffect(() => {
@@ -140,68 +180,8 @@ const TestingView = () => {
     },
   }
 
-  if (isLoading) {
-    return (
-      <Card title="测试建议" loading>
-        <div>加载中...</div>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card title="测试建议">
-        <Alert message="加载测试结果失败" description={(error as any)?.message} type="error" showIcon />
-      </Card>
-    )
-  }
-
-  if (!data) {
-    return (
-      <Card
-        title="测试建议"
-        extra={
-          <Button
-            type="primary"
-            onClick={async () => {
-              try {
-                await generateMutation.mutateAsync({
-                  patches: [],
-                  related_files: [],
-                })
-                message.success('✅ 测试建议生成成功')
-                refetch()
-              } catch (err) {
-                message.error('❌ 生成失败：' + ((err as any)?.message || '未知错误'))
-              }
-            }}
-            loading={generateMutation.isPending}
-            disabled={generateMutation.isPending}
-          >
-            生成测试建议
-          </Button>
-        }
-      >
-        <Alert
-          message="暂无测试结果"
-          description="请先点击「生成测试建议」获取分析结果"
-          type="info"
-          showIcon
-        />
-      </Card>
-    )
-  }
-
-  const { potential_issues = [], test_cases = [], checklist = [], manual_checklist = [], test_id, generated_at } = data
-  const finalChecklist = checklist.length > 0 ? checklist : manual_checklist
-
-  // Filter issues by severity
-  const filteredIssues = potential_issues.filter(
-    (issue) => severityFilter === 'all' || issue.severity === severityFilter
-  )
-
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '16px' }}>
+    <div style={{ padding: '24px' }}>
       <Breadcrumb
         style={{ marginBottom: 16 }}
         items={[
@@ -228,7 +208,50 @@ const TestingView = () => {
           <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
         </Card>
       )}
-      {/* Header Card */}
+      {isLoading ? (
+        <Card title="测试建议" loading>
+          <div>加载中...</div>
+        </Card>
+      ) : error ? (
+        <Card title="测试建议">
+          <Alert message="加载测试结果失败" description={(error as any)?.message} type="error" showIcon />
+        </Card>
+      ) : !data ? (
+        <Card
+          title="测试建议"
+          extra={
+            <Button
+              type="primary"
+              onClick={async () => {
+                try {
+                  await generateMutation.mutateAsync({
+                    patches: [],
+                    related_files: [],
+                  })
+                  message.success('✅ 测试建议生成成功')
+                  refetch()
+                } catch (err) {
+                  message.error('❌ 生成失败：' + ((err as any)?.message || '未知错误'))
+                }
+              }}
+              loading={generateMutation.isPending}
+              disabled={generateMutation.isPending}
+            >
+              生成测试建议
+            </Button>
+          }
+        >
+          <Alert
+            message="暂无测试结果"
+            description="请先点击「生成测试建议」获取分析结果"
+            type="info"
+            showIcon
+          />
+        </Card>
+      ) : (
+
+        <>
+          {/* Header Card */}
       <Card
         title="🧪 测试建议与验收清单"
         extra={
@@ -393,6 +416,8 @@ const TestingView = () => {
           </Button>
         </div>
       </Card>
+        </>
+      )}
     </div>
   )
 }
