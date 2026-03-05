@@ -81,9 +81,67 @@ export interface TestResponseOut {
   generated_at?: string;
 }
 
-export interface HistoryItem {
-  type: string;
-  timestamp: string;
-  description: string;
-  data: any;
+export type HistoryItemType =
+  | 'case'
+  | 'plan'
+  | 'task'
+  | 'patch'
+  | 'test'
+  | 'agent_run'
+  | 'summary'
+
+export interface HistoryItemBase {
+  id?: string
+  type: HistoryItemType
+  timestamp: string
+  description: string
+}
+
+export interface CaseHistoryItem extends HistoryItemBase {
+  type: 'case'
+  data: {
+    id: string
+    title: string
+    status: string
+  }
+}
+
+export interface PlanHistoryItem extends HistoryItemBase {
+  type: 'plan'
+  data: {
+    plan_id: string
+    tasks_count: number
+  }
+}
+
+export interface PatchHistoryItem extends HistoryItemBase {
+  type: 'patch'
+  data: {
+    task_id: string
+    file_path: string
+    description: string
+    [key: string]: any
+  }
+}
+
+export interface AgentRunHistoryItem extends HistoryItemBase {
+  type: 'agent_run'
+  data: {
+    agent_type: string
+    model: string
+    status: string
+    [key: string]: any
+  }
+}
+
+export type HistoryItem =
+  | CaseHistoryItem
+  | PlanHistoryItem
+  | PatchHistoryItem
+  | AgentRunHistoryItem
+  | (HistoryItemBase & { type: 'test' | 'summary' | 'task'; data: Record<string, any> })
+
+export interface CaseHistoryOut {
+  case: CaseOut
+  history: HistoryItem[]
 }

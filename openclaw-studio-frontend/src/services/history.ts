@@ -4,16 +4,31 @@
 
 import { useQuery } from '@tanstack/react-query';
 import apiClient from './apiClient';
-import type { HistoryItem } from './types';
+import type { HistoryItem, CaseHistoryOut } from './types';
+
+export interface HistoryQueryParams {
+  types?: string[]
+  startTime?: string
+  endTime?: string
+  search?: string
+}
 
 // 获取案例历史记录
-export const useCaseHistoryQuery = (caseId: string) => {
-  return useQuery<HistoryItem[]>({
-    queryKey: ['history', caseId],
+export const useCaseHistoryQuery = (caseId: string, params?: HistoryQueryParams) => {
+  return useQuery<CaseHistoryOut>({
+    queryKey: ['history', caseId, params],
     queryFn: async () => {
-      const response = await apiClient.get(`/api/v1/cases/${caseId}/history`);
-      return response.data;
+      const url = new URL(`/api/v1/cases/${caseId}/history`, apiClient.defaults.baseURL)
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && v !== '') {
+            url.searchParams.append(k, Array.isArray(v) ? v.join(',') : String(v))
+          }
+        })
+      }
+      const response = await apiClient.get(url.pathname + url.search)
+      return response.data
     },
     enabled: !!caseId,
-  });
-};
+  })
+}
