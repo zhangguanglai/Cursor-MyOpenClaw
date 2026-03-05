@@ -72,7 +72,14 @@ async def trigger_planning(
             tasks=tasks
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Planning failed: {str(e)}")
+        import traceback
+        error_detail = str(e)
+        error_traceback = traceback.format_exc()
+        logger.error(f"Planning failed: {error_detail}\n{error_traceback}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Planning failed: {error_detail}"
+        )
 
 
 @router.get("/{case_id}/plan", response_model=PlanningResponseOut)
