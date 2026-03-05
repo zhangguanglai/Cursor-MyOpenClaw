@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import {
   Card,
   List,
@@ -13,20 +13,24 @@ import {
   Tooltip,
   message,
   Popconfirm,
+  Breadcrumb,
 } from 'antd'
-import { CopyOutlined, CheckCircleOutlined, PlayCircleOutlined, EyeOutlined } from '@ant-design/icons'
+import { CopyOutlined, CheckCircleOutlined, PlayCircleOutlined, EyeOutlined, HomeOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useCasePatchesQuery, useCaseTasksQuery, useGenerateCodeMutation, useApplyPatchMutation } from '../../services/coding'
+import { useCaseQuery } from '../../services/cases'
 import type { PatchOut } from '../../services/types'
 import DiffPreview from '../../components/DiffPreview'
 import { useQueryClient } from '@tanstack/react-query'
 
-const { Text, Paragraph } = Typography
+const { Text, Paragraph, Title } = Typography
 const { Option } = Select
 
 const ExecutionView = () => {
   const { caseId } = useParams<{ caseId: string }>()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { data: caseData } = useCaseQuery(caseId || '')
 
   // 获取任务列表（用于生成补丁）
   const { data: tasks = [], isLoading: isTasksLoading } = useCaseTasksQuery(caseId || '')

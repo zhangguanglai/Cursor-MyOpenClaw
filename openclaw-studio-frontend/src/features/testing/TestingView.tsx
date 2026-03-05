@@ -48,6 +48,7 @@ const parseChecklist = (raw: string[]): { text: string; checked: boolean }[] => 
 
 const TestingView = () => {
   const { caseId } = useParams<{ caseId: string }>()
+  const { data: caseData } = useCaseQuery(caseId || '')
   const [checklistState, setChecklistState] = useState<{ text: string; checked: boolean }[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [severityFilter, setSeverityFilter] = useState<string>('all')
