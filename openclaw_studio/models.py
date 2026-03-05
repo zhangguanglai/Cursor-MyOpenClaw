@@ -94,6 +94,7 @@ class HistoryItem(BaseModel):
     """历史记录项模型"""
     type: str = Field(..., description="记录类型")
     timestamp: str = Field(..., description="时间戳")
+    description: str = Field(..., description="事件描述")
     data: Dict[str, Any] = Field(..., description="数据")
 
 
