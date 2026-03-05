@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 ```bash
 # Windows PowerShell
-$env:QWEN_API_KEY="your_qwen_api_key"
+$env:QWEN_API_KEY="sk-sp-5d0278696a1347ad92725d9552182fd9"
 $env:MINIMAX_API_KEY="your_minimax_api_key"
 
 # Linux/Mac
