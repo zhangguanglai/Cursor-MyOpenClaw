@@ -67,11 +67,15 @@ async def get_git_status(
         status = git_tools.get_status()
         repo_info = git_tools.get_repo_info()
         
+        # 构建标准化的 GitStatusOut 格式
         return {
             "case_id": case_id,
             "repo_path": str(git_tools.repo_path),
-            "status": status,
-            "repo_info": repo_info,
+            "current_branch": repo_info.get("current_branch", "unknown"),
+            "remote_url": repo_info.get("remote_url"),
+            "staged_files": status.get("staged_files", []),
+            "unstaged_files": status.get("unstaged_files", []),
+            "untracked_files": status.get("untracked_files", []),
         }
     except Exception as e:
         logger.error(f"获取 Git 状态失败: {e}")
