@@ -201,6 +201,32 @@ const TestingView = () => {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '16px' }}>
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            href: '/cases',
+            title: (
+              <>
+                <HomeOutlined />
+                <span>需求中心</span>
+              </>
+            ),
+          },
+          {
+            title: caseData?.title || `案例 ${caseId}`,
+          },
+          {
+            title: '测试视图',
+          },
+        ]}
+      />
+      {caseData && (
+        <Card style={{ marginBottom: 16 }}>
+          <Title level={4}>{caseData.title}</Title>
+          <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+        </Card>
+      )}
       {/* Header Card */}
       <Card
         title="🧪 测试建议与验收清单"

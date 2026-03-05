@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { Card, Space, Row, Col, Spin, Alert } from 'antd'
+import { Card, Space, Row, Col, Spin, Alert, Breadcrumb, Typography } from 'antd'
+import { HomeOutlined } from '@ant-design/icons'
+import { useCaseQuery } from '../../services/cases'
 import { useCaseHistoryQuery } from '../../services/history'
 import type { HistoryItem } from '../../services/types'
 import { HistoryTimeline } from './HistoryTimeline'
@@ -8,8 +10,11 @@ import { HistoryFilters } from './HistoryFilters'
 import { HistoryStatsCard } from './HistoryStatsCard'
 import { HistoryDetailModal } from './HistoryDetailModal'
 
+const { Title } = Typography
+
 const HistoryView = () => {
   const { caseId } = useParams<{ caseId: string }>()
+  const { data: caseData } = useCaseQuery(caseId || '')
   const [filters, setFilters] = useState({
     types: [] as string[],
     startTime: '',

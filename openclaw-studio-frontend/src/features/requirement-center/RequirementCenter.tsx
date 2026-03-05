@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Button, Table, Drawer, Form, Input, Space, message } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Button, Table, Drawer, Form, Input, Space, message, Tag, Dropdown } from 'antd'
+import { PlusOutlined, EyeOutlined, UnorderedListOutlined, CodeOutlined, CheckCircleOutlined, HistoryOutlined } from '@ant-design/icons'
+import type { MenuProps } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import { useCasesQuery, useCreateCaseMutation } from '../../services/cases'
-import type { CaseCreate } from '../../services/types'
+import type { CaseCreate, CaseOut } from '../../services/types'
 
 const RequirementCenter = () => {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [form] = Form.useForm()
+  const navigate = useNavigate()
   
   const { data: cases, isLoading } = useCasesQuery()
   const createMutation = useCreateCaseMutation()
@@ -22,29 +25,110 @@ const RequirementCenter = () => {
     }
   }
 
+  const getStatusColor = (status: string) => {
+    const colorMap: Record<string, string> = {
+      created: 'default',
+      planning: 'processing',
+      coding: 'processing',
+      testing: 'warning',
+      completed: 'success',
+    }
+    return colorMap[status] || 'default'
+  }
+
+  const getStatusText = (status: string) => {
+    const textMap: Record<string, string> = {
+      created: '已创建',
+      planning: '规划中',
+      coding: '编码中',
+      testing: '测试中',
+      completed: '已完成',
+    }
+    return textMap[status] || status
+  }
+
+  const handleViewCase = (caseItem: CaseOut) => {
+    // 跳转到规划视图（默认）
+    navigate(`/cases/${caseItem.id}/plan`)
+  }
+
+  const getActionMenu = (caseItem: CaseOut): MenuProps => ({
+    items: [
+      {
+        key: 'plan',
+        label: '规划视图',
+        icon: <UnorderedListOutlined />,
+        onClick: () => navigate(`/cases/${caseItem.id}/plan`),
+      },
+      {
+        key: 'execution',
+        label: '执行视图',
+        icon: <CodeOutlined />,
+        onClick: () => navigate(`/cases/${caseItem.id}/execution`),
+      },
+      {
+        key: 'test',
+        label: '测试视图',
+        icon: <CheckCircleOutlined />,
+        onClick: () => navigate(`/cases/${caseItem.id}/test`),
+      },
+      {
+        key: 'history',
+        label: '历史视图',
+        icon: <HistoryOutlined />,
+        onClick: () => navigate(`/cases/${caseItem.id}/history`),
+      },
+    ],
+  })
+
   const columns = [
     {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 120,
+      width: 150,
+      render: (id: string) => <code style={{ fontSize: '12px' }}>{id}</code>,
     },
     {
       title: '标题',
       dataIndex: 'title',
       key: 'title',
+      ellipsis: true,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
       width: 100,
+      render: (status: string) => (
+        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
+      ),
     },
     {
       title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
       width: 180,
+      render: (time: string) => new Date(time).toLocaleString('zh-CN'),
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 200,
+      render: (_: any, record: CaseOut) => (
+        <Space>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewCase(record)}
+          >
+            查看详情
+          </Button>
+          <Dropdown menu={getActionMenu(record)} trigger={['click']}>
+            <Button type="link">更多</Button>
+          </Dropdown>
+        </Space>
+      ),
     },
   ]
 

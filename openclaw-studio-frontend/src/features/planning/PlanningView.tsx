@@ -1,6 +1,6 @@
-import { useParams } from 'react-router-dom'
-import { Button, Card, Tabs, message, Spin, Alert } from 'antd'
-import { SyncOutlined } from '@ant-design/icons'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Button, Card, Tabs, message, Spin, Alert, Breadcrumb, Typography } from 'antd'
+import { SyncOutlined, HomeOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
 import { useCasePlanQuery, useTriggerPlanningMutation, useUpdatePlanMutation, useUpdateTaskStatusMutation } from '../../services/planning'
 import { useCaseQuery } from '../../services/cases'
@@ -9,8 +9,11 @@ import { MarkdownEditor } from '../../components/MarkdownEditor'
 import { TaskTable, TaskDetailModal } from './TaskTable'
 import { PlanRenderer } from './PlanRenderer'
 
+const { Title } = Typography
+
 const PlanningView = () => {
   const { caseId } = useParams<{ caseId: string }>()
+  const navigate = useNavigate()
   const { data: caseData } = useCaseQuery(caseId || '')
   const { data: planData, isLoading, refetch } = useCasePlanQuery(caseId || '')
   const triggerMutation = useTriggerPlanningMutation(caseId || '')
@@ -107,6 +110,32 @@ const PlanningView = () => {
 
   return (
     <div>
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            href: '/cases',
+            title: (
+              <>
+                <HomeOutlined />
+                <span>需求中心</span>
+              </>
+            ),
+          },
+          {
+            title: caseData?.title || `案例 ${caseId}`,
+          },
+          {
+            title: '规划视图',
+          },
+        ]}
+      />
+      {caseData && (
+        <Card style={{ marginBottom: 16 }}>
+          <Title level={4}>{caseData.title}</Title>
+          <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+        </Card>
+      )}
       <Card
         title="实现计划"
         extra={
