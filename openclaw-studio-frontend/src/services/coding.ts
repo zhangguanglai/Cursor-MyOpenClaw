@@ -30,13 +30,16 @@ export const useCasePatchesQuery = (caseId: string) => {
     queryKey: ['patches', caseId],
     queryFn: async () => {
       const response = await apiClient.get(`/api/v1/cases/${caseId}/patches`);
-      // 为每个补丁添加 id（如果没有）
-      return response.data.map((patch: PatchOut, index: number) => ({
+      // 为每个补丁添加 id 和标准化字段
+      return response.data.map((patch: any, index: number) => ({
         ...patch,
         id: patch.id || patch.task_id || `patch-${index}`,
+        task_id: patch.task_id || patch.id || `task-${index}`,
         content: patch.content || patch.diff || '',
+        file_path: patch.file_path || '',
+        description: patch.description || '',
         created_at: patch.created_at || new Date().toISOString(),
-      }));
+      } as PatchOut));
     },
     enabled: !!caseId,
   });
