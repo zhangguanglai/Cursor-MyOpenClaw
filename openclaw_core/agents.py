@@ -92,7 +92,21 @@ class PlanningAgent:
 - 计划具体、可执行
 - 子任务粒度适中（每个任务 1-3 小时工作量）
 - 明确标注风险等级和依赖关系
-- 提供测试建议和验收标准"""
+- 提供测试建议和验收标准
+
+**重要**：请在响应末尾包含一个 JSON 格式的任务列表，格式如下：
+```json
+[
+  {
+    "id": "task-001",
+    "title": "任务标题",
+    "description": "任务描述",
+    "estimated_steps": ["步骤1", "步骤2"],
+    "related_files": ["文件路径"],
+    "risk_level": "low|medium|high"
+  }
+]
+```"""
 
         # 4. 构建用户消息
         user_parts = [f"## 需求描述\n{request['requirement_description']}\n"]
