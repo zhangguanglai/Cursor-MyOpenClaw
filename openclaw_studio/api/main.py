@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from openclaw_core.logger import get_logger
-from openclaw_studio.api.v1 import cases, history, planning, coding, testing
+from openclaw_studio.api.v1 import cases, history, planning, coding, testing, git
 
 logger = get_logger("openclaw.api")
 
@@ -37,6 +37,7 @@ app.include_router(planning.router, prefix="/api/v1", tags=["Planning"])
 app.include_router(coding.router, prefix="/api/v1", tags=["Coding"])
 app.include_router(testing.router, prefix="/api/v1", tags=["Testing"])
 app.include_router(history.router, prefix="/api/v1", tags=["History"])
+app.include_router(git.router, prefix="/api/v1", tags=["Git"])
 
 # 全局异常处理器
 @app.exception_handler(RequestValidationError)

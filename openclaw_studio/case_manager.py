@@ -11,6 +11,9 @@ from typing import Dict, List, Optional, Any
 
 from openclaw_studio.database import CaseDatabase, Case, Plan, Task, AgentRun, TestRecord
 from openclaw_studio.case_storage import CaseStorage
+from openclaw_core.logger import get_logger
+
+logger = get_logger("openclaw.case_manager")
 
 
 class CaseManager:
@@ -46,6 +49,33 @@ class CaseManager:
         Returns:
             创建的案例对象
         """
+        # 如果提供了 repo_path，验证 Git 仓库
+        if repo_path:
+            try:
+                from openclaw_core.git_tools import GitTools
+                repo_path_obj = Path(repo_path)
+                if not repo_path_obj.is_absolute():
+                    # 尝试相对于项目根目录
+                    project_root = Path(__file__).parent.parent
+                    repo_path_obj = project_root / repo_path
+                
+                git_tools = GitTools(str(repo_path_obj))
+                # 如果提供了 branch，验证分支是否存在
+                if branch:
+                    branches = git_tools.get_branches(remote=False)
+                    if branch not in branches:
+                        # 尝试远程分支
+                        remote_branches = git_tools.get_branches(remote=True)
+                        if branch not in remote_branches:
+                            logger.warning(f"分支 '{branch}' 不存在，将使用当前分支")
+                            branch = git_tools.get_current_branch()
+                else:
+                    # 如果没有提供 branch，使用当前分支
+                    branch = git_tools.get_current_branch()
+            except Exception as e:
+                logger.warning(f"Git 仓库验证失败: {e}，将创建案例但不关联 Git 仓库")
+                # 不抛出异常，允许创建案例但不关联 Git
+        
         case_id = f"case-{uuid.uuid4().hex[:8]}"
         case = Case(
             id=case_id,
