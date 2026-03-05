@@ -6,6 +6,7 @@
 
 import json
 import uuid
+import sqlite3
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -157,19 +158,9 @@ class CaseManager:
             # 检查任务是否已存在
             existing_task = self.db.get_task(task_id)
             if existing_task:
-                # 如果任务已存在，更新它而不是创建新任务
-                related_files = json.dumps(task_data.get("related_files", [])) if task_data.get("related_files") else None
-                updated_task = Task(
-                    id=task_id,
-                    case_id=case_id,
-                    plan_id=plan_id,
-                    title=task_data.get("title", ""),
-                    description=task_data.get("description", ""),
-                    status=existing_task.status,  # 保留原有状态
-                    related_files=related_files,
-                    risk_level=task_data.get("risk_level"),
-                )
-                self.db.update_task(updated_task)
+                # 如果任务已存在，跳过（避免重复创建）
+                logger.debug(f"任务 {task_id} 已存在，跳过创建")
+                continue
             else:
                 # 创建新任务
                 related_files = json.dumps(task_data.get("related_files", [])) if task_data.get("related_files") else None
