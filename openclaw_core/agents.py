@@ -453,13 +453,31 @@ class TestAgent:
         match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
         if match:
             text = match.group(1)
-            # 提取每个问题
-            items = re.findall(r"^[-*]\s*(.+?)(?:严重程度[：:]\s*(\w+))?", text, re.MULTILINE | re.IGNORECASE)
+            # 提取每个问题 - 支持多种格式：
+            # - **[high]** 描述
+            # - [high] 描述
+            # - 描述 (严重程度: high)
+            items = re.findall(
+                r"^[-*]\s*(?:\*\*)?\[(\w+)\](?:\*\*)?\s*(.+?)$|^[-*]\s*(.+?)(?:严重程度[：:]\s*(\w+))?$",
+                text,
+                re.MULTILINE | re.IGNORECASE
+            )
             for item in items:
-                desc = item[0].strip()
-                severity = item[1].strip().lower() if item[1] else "medium"
+                if item[0]:  # 格式: **[high]** 描述
+                    severity = item[0].strip().lower()
+                    desc = item[1].strip()
+                elif item[2]:  # 格式: 描述 (严重程度: high)
+                    desc = item[2].strip()
+                    severity = item[3].strip().lower() if item[3] else "medium"
+                else:
+                    continue
+                
                 if severity not in ["low", "medium", "high"]:
                     severity = "medium"
+                
+                # 清理描述中的 markdown 标记
+                desc = re.sub(r'\*\*', '', desc).strip()
+                
                 issues.append(PotentialIssue(
                     description=desc,
                     severity=severity,
@@ -477,18 +495,34 @@ class TestAgent:
         match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
         if match:
             text = match.group(1)
-            # 提取每个测试用例
-            case_pattern = r"(?:###|##)\s*(.+?)\n(.*?)(?=(?:###|##)|\Z)"
+            # 提取每个测试用例 - 支持多种格式：
+            # ### 测试用例名称
+            # ### ✅ 测试用例名称
+            # ## 测试用例名称
+            case_pattern = r"(?:###|##)\s*(?:✅\s*)?(.+?)\n(.*?)(?=(?:###|##)|\Z)"
             cases = re.finditer(case_pattern, text, re.DOTALL)
             for case_match in cases:
                 name = case_match.group(1).strip()
                 details = case_match.group(2)
-                # 提取步骤
-                steps = re.findall(r"^[-*]\s*(.+)$", details, re.MULTILINE)
+                
+                # 清理名称中的 markdown 标记
+                name = re.sub(r'[✅❌]', '', name).strip()
+                
+                # 提取步骤 - 支持多种格式
+                steps = re.findall(r"^[-*]\s*\d+\.\s*(.+)$|^[-*]\s*(.+)$", details, re.MULTILINE)
+                step_list = []
+                for step in steps:
+                    step_text = step[0] if step[0] else step[1]
+                    step_list.append(step_text.strip())
+                
+                # 如果没有找到步骤，使用整个 details 作为描述
+                if not step_list:
+                    step_list = [details.strip()[:200]]  # 限制长度
+                
                 test_cases.append(TestCase(
                     name=name,
                     type="unit",  # 默认类型
-                    steps=[s.strip() for s in steps],
+                    steps=step_list,
                     target_file="tests/test_module.py",
                 ))
         return test_cases
@@ -497,11 +531,26 @@ class TestAgent:
     def _extract_list_section(content: str, keyword: str, label: str) -> List[str]:
         """提取列表章节"""
         import re
-        pattern = rf"##\s*{label}.*?\n(.*?)(?=\n##|\Z)"
+        # 支持多种标签名称
+        labels = [label, "人工验收", "验收清单", "验收", "检查清单"]
+        pattern = rf"##\s*(?:{'|'.join(re.escape(l) for l in labels)}).*?\n(.*?)(?=\n##|\Z)"
         match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
         if not match:
             return []
 
         text = match.group(1)
-        items = re.findall(r"^[-*]\s*(.+)$", text, re.MULTILINE)
-        return [item.strip() for item in items]
+        # 支持多种格式：
+        # - [ ] ✅ 项目
+        # - ✅ 项目
+        # - 项目
+        items = re.findall(r"^[-*]\s*(?:\[[ x]\]\s*)?(?:[✅❌]\s*)?(.+)$", text, re.MULTILINE)
+        # 清理项目文本
+        cleaned_items = []
+        for item in items:
+            cleaned = item.strip()
+            # 移除多余的 markdown 标记
+            cleaned = re.sub(r'^\*\*', '', cleaned)
+            cleaned = re.sub(r'\*\*$', '', cleaned)
+            if cleaned:
+                cleaned_items.append(cleaned)
+        return cleaned_items

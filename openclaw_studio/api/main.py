@@ -81,3 +81,14 @@ async def root():
         "docs": "/docs",
         "redoc": "/redoc"
     }
+
+@app.get("/health")
+async def health():
+    """健康检查端点"""
+    from datetime import datetime, timezone
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "service": "OpenClaw Studio API",
+        "version": "0.1.0"
+    }

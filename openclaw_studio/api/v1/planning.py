@@ -89,16 +89,30 @@ async def get_planning(
         raise HTTPException(status_code=404, detail="Plan not found")
     
     # 转换任务格式
-    tasks = [
-        TaskOut(
+    tasks = []
+    db_tasks = case_manager.get_tasks(case_id)
+    
+    for task in db_tasks:
+        # 解析 related_files（可能是 JSON 字符串）
+        related_files = []
+        if task.related_files:
+            try:
+                related_files = json.loads(task.related_files)
+            except (json.JSONDecodeError, TypeError):
+                # 如果不是 JSON，尝试作为列表处理
+                if isinstance(task.related_files, list):
+                    related_files = task.related_files
+                elif isinstance(task.related_files, str):
+                    # 尝试按逗号分割
+                    related_files = [f.strip() for f in task.related_files.split(",") if f.strip()]
+        
+        tasks.append(TaskOut(
             id=task.id,
             title=task.title,
             description=task.description or "",
-            related_files=json.loads(task.related_files) if task.related_files else [],
+            related_files=related_files,
             risk_level=task.risk_level or "medium"
-        )
-        for task in case_manager.get_tasks(case_id)
-    ]
+        ))
     
     return PlanningResponseOut(
         plan_markdown=plan_data.get("markdown", ""),

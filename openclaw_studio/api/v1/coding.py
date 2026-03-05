@@ -97,10 +97,24 @@ async def get_patches(
     patches = []
     
     for patch_info in patches_info:
-        patch_content = case_manager.storage.load_patch(case_id, patch_info["task_id"])
+        task_id = patch_info.get("task_id", "")
+        if not task_id:
+            continue
+            
+        patch_content = case_manager.storage.load_patch(case_id, task_id)
         if patch_content:
+            # 从文件路径中提取实际的文件路径（如果补丁是 diff 格式）
+            file_path = patch_info.get("file_path", "")
+            # 如果 file_path 是完整路径，提取相对路径
+            if file_path and "cases" in file_path:
+                # 尝试从补丁内容中提取文件路径
+                import re
+                diff_match = re.search(r"diff --git a/(.+?) b/", patch_content)
+                if diff_match:
+                    file_path = diff_match.group(1)
+            
             patches.append(PatchMeta(
-                file_path=patch_info.get("file_path", ""),
+                file_path=file_path or f"patches/{task_id}.patch",
                 diff=patch_content,
                 description=patch_info.get("description", "")
             ))

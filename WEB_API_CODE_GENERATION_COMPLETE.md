@@ -73,10 +73,10 @@
 - **已完成**: 7 (100%)
 - **失败**: 1 (task-003，超时，可重试)
 - **代码补丁**: 10 个
-- **Agent 调用**: 30 次
+- **Agent 调用**: 33 次
   - PlanningAgent: 5 次
   - CodingAgent: 25 次
-  - TestAgent: 0 次
+  - TestAgent: 3 次 ✅（已执行，使用优化输入格式）
 
 ---
 
