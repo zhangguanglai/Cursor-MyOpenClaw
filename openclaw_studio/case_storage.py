@@ -128,6 +128,33 @@ class CaseStorage:
         content = "# 验收清单\n\n" + "\n".join([f"- [ ] {item}" for item in checklist])
         checklist_path.write_text(content, encoding="utf-8")
         return checklist_path
+    
+    def load_test_suggestions(self, case_id: str) -> Optional[str]:
+        """加载测试建议"""
+        case_dir = self.get_case_dir(case_id)
+        suggestions_path = case_dir / "tests" / "suggestions.md"
+        if suggestions_path.exists():
+            return suggestions_path.read_text(encoding="utf-8")
+        return None
+    
+    def load_test_checklist(self, case_id: str) -> Optional[List[str]]:
+        """加载测试验收清单"""
+        case_dir = self.get_case_dir(case_id)
+        checklist_path = case_dir / "tests" / "checklist.md"
+        if checklist_path.exists():
+            content = checklist_path.read_text(encoding="utf-8")
+            # 解析 markdown 列表项
+            lines = content.split("\n")
+            checklist = []
+            for line in lines:
+                line = line.strip()
+                if line.startswith("- [ ]") or line.startswith("- [x]") or line.startswith("* [ ]") or line.startswith("* [x]"):
+                    # 提取文本部分
+                    text = line.split("]", 1)[1].strip() if "]" in line else line[2:].strip()
+                    if text:
+                        checklist.append(text)
+            return checklist if checklist else None
+        return None
 
     def save_summary(self, case_id: str, content: str) -> Path:
         """保存案例总结"""

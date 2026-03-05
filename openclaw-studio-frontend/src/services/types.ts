@@ -65,7 +65,7 @@ export interface TestRequestIn {
 }
 
 export interface TestResponseOut {
-  test_id: string;
+  test_id?: string;
   potential_issues: Array<{
     description: string;
     severity: string;
@@ -76,7 +76,9 @@ export interface TestResponseOut {
     steps: string[];
     expected_result: string;
   }>;
-  checklist: string[];
+  checklist?: string[];
+  manual_checklist?: string[];
+  generated_at?: string;
 }
 
 export interface HistoryItem {

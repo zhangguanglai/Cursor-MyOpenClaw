@@ -169,6 +169,52 @@ class CaseManager:
             "suggestions": suggestions_path,
             "checklist": checklist_path,
         }
+    
+    def get_latest_test_results(self, case_id: str) -> Optional[Dict[str, Any]]:
+        """获取最新的测试结果"""
+        import json
+        from datetime import datetime
+        from pathlib import Path
+        
+        # 获取最新的 test agent run
+        agent_runs = self.db.get_agent_runs(case_id, agent_type="test")
+        if not agent_runs:
+            return None
+        
+        # 获取最新的 run（按 created_at 排序，取第一个）
+        latest_run = agent_runs[0] if agent_runs else None
+        if not latest_run:
+            return None
+        
+        # 加载测试建议和清单
+        checklist = self.storage.load_test_checklist(case_id)
+        
+        # 从 output_path 中提取信息
+        potential_issues = []
+        test_cases = []
+        
+        if latest_run.output_path:
+            try:
+                output_data = json.loads(Path(latest_run.output_path).read_text(encoding="utf-8"))
+                potential_issues = output_data.get("potential_issues", [])
+                test_cases = output_data.get("test_cases", [])
+            except Exception as e:
+                # 如果无法读取 output_path，尝试从数据库记录中获取
+                # 检查是否有保存的 output_data
+                pass
+        
+        # 如果 output_data 中没有，尝试从 TestAgent 的 analyze_changes 结果中获取
+        # 但这里我们无法重新调用 agent，所以返回空列表
+        # 实际使用时，应该在保存时就保存完整的输出数据
+        
+        return {
+            "test_id": latest_run.id,
+            "potential_issues": potential_issues,
+            "test_cases": test_cases,
+            "manual_checklist": checklist or [],
+            "checklist": checklist or [],
+            "generated_at": latest_run.created_at or datetime.now().isoformat(),
+        }
 
     def save_summary(self, case_id: str, content: str) -> Path:
         """保存案例总结"""

@@ -2,9 +2,22 @@
  * 测试 API Hooks
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from './apiClient';
 import type { TestRequestIn, TestResponseOut } from './types';
+
+// 获取测试结果
+export const useGetTestResultsQuery = (caseId: string) => {
+  return useQuery<TestResponseOut>({
+    queryKey: ['testing', caseId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/v1/cases/${caseId}/test`);
+      return response.data;
+    },
+    enabled: !!caseId,
+    retry: false, // 如果不存在测试结果，不重试
+  });
+};
 
 // 生成测试建议
 export const useGenerateTestMutation = (caseId: string) => {

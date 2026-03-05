@@ -82,9 +82,12 @@ class TestRequestIn(BaseModel):
 
 class TestResponseOut(BaseModel):
     """测试响应模型"""
+    test_id: Optional[str] = Field(None, description="测试 ID")
     potential_issues: List[Dict[str, Any]] = Field(default_factory=list, description="潜在问题")
     test_cases: List[Dict[str, Any]] = Field(default_factory=list, description="测试用例")
     manual_checklist: List[str] = Field(default_factory=list, description="验收清单")
+    checklist: Optional[List[str]] = Field(None, description="验收清单（别名）")
+    generated_at: Optional[str] = Field(None, description="生成时间")
 
 
 class HistoryItem(BaseModel):
