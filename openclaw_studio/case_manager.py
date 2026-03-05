@@ -95,8 +95,29 @@ class CaseManager:
         return self.db.list_cases(status)
 
     def update_case_status(self, case_id: str, status: str) -> bool:
-        """更新案例状态"""
-        return self.db.update_case(case_id, status=status)
+        """
+        更新案例状态
+        
+        如果状态更新为 completed，自动归档到知识库
+        """
+        success = self.db.update_case(case_id, status=status)
+        
+        # 如果状态更新为 completed，自动归档到知识库
+        if success and status == "completed":
+            try:
+                from openclaw_studio.knowledge_base import KnowledgeBase
+                from pathlib import Path
+                
+                knowledge_base = KnowledgeBase()
+                case_dir = Path(self.storage.base_path) / case_id
+                if case_dir.exists():
+                    knowledge_base.archive_case(case_id, case_dir)
+                    logger.info(f"案例 {case_id} 已自动归档到知识库")
+            except Exception as e:
+                logger.warning(f"自动归档案例失败 {case_id}: {e}")
+                # 不抛出异常，归档失败不影响状态更新
+        
+        return success
 
     def save_plan(
         self,
