@@ -27,10 +27,19 @@ export const useCasePlanQuery = (caseId: string) => {
   return useQuery<PlanningResponseOut>({
     queryKey: ['planning', caseId],
     queryFn: async () => {
-      const response = await apiClient.get(`/api/v1/cases/${caseId}/plan`);
-      return response.data;
+      try {
+        const response = await apiClient.get(`/api/v1/cases/${caseId}/plan`);
+        return response.data;
+      } catch (error: any) {
+        // 如果是 404，说明计划不存在，返回 null 而不是抛出错误
+        if (error.response?.status === 404) {
+          return null as any;
+        }
+        throw error;
+      }
     },
     enabled: !!caseId,
+    retry: false, // 404 不需要重试
   });
 };
 

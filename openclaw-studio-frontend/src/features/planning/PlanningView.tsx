@@ -7,7 +7,6 @@ import { useCaseQuery } from '../../services/cases'
 import type { TaskOut } from '../../services/types'
 import { MarkdownEditor } from '../../components/MarkdownEditor'
 import { TaskTable, TaskDetailModal } from './TaskTable'
-import { PlanRenderer } from './PlanRenderer'
 import GitStatus from '../../components/GitStatus'
 
 const { Title } = Typography
@@ -15,8 +14,8 @@ const { Title } = Typography
 const PlanningView = () => {
   const { caseId } = useParams<{ caseId: string }>()
   const navigate = useNavigate()
-  const { data: caseData } = useCaseQuery(caseId || '')
-  const { data: planData, isLoading, refetch } = useCasePlanQuery(caseId || '')
+  const { data: caseData, isLoading: isCaseLoading, error: caseError } = useCaseQuery(caseId || '')
+  const { data: planData, isLoading, error: planError, refetch } = useCasePlanQuery(caseId || '')
   const triggerMutation = useTriggerPlanningMutation(caseId || '')
   const updateMutation = useUpdatePlanMutation(caseId || '')
   const updateTaskStatusMutation = useUpdateTaskStatusMutation(caseId || '')
@@ -33,13 +32,17 @@ const PlanningView = () => {
   // 初始化数据
   useEffect(() => {
     if (planData) {
-      setEditingMarkdown(planData.plan_markdown)
+      setEditingMarkdown(planData.plan_markdown || '')
       setTasks(
-        planData.tasks.map((t) => ({
+        (planData.tasks || []).map((t) => ({
           ...t,
           status: (t.status as 'pending' | 'completed') || 'pending',
         }))
       )
+    } else {
+      // 如果没有计划数据，重置状态
+      setEditingMarkdown('')
+      setTasks([])
     }
   }, [planData])
 
@@ -54,13 +57,19 @@ const PlanningView = () => {
       message.success('规划生成成功')
       refetch()
     } catch (error) {
+      console.error('Planning generation error:', error)
       message.error('规划生成失败')
     }
   }
 
   const handleSavePlan = async (content: string) => {
-    await updateMutation.mutateAsync(content)
-    setIsEditing(false)
+    try {
+      await updateMutation.mutateAsync(content)
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Plan save error:', error)
+      message.error('计划保存失败')
+    }
   }
 
   const handleTaskStatusChange = async (taskId: string, status: 'pending' | 'completed') => {
@@ -69,6 +78,7 @@ const PlanningView = () => {
       setTasks(tasks.map(t => t.id === taskId ? { ...t, status } : t))
       message.success('任务状态更新成功')
     } catch (error) {
+      console.error('Task status update error:', error)
       message.error('任务状态更新失败')
     }
   }
@@ -82,10 +92,10 @@ const PlanningView = () => {
     {
       key: 'plan',
       label: '计划',
-      children: planData ? (
+      children: planData && planData.plan_markdown ? (
         <div style={{ minHeight: '700px' }}>
           <MarkdownEditor
-            markdown={editingMarkdown}
+            markdown={editingMarkdown || planData.plan_markdown || ''}
             onSave={handleSavePlan}
             isSaving={updateMutation.isPending}
           />
@@ -109,6 +119,43 @@ const PlanningView = () => {
     },
   ]
 
+  // 错误处理
+  if (caseError) {
+    return (
+      <div>
+        <Alert
+          message="加载案例失败"
+          description={caseError instanceof Error ? caseError.message : '未知错误'}
+          type="error"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
+  if (!caseId) {
+    return (
+      <div>
+        <Alert
+          message="案例 ID 不存在"
+          description="请从需求中心选择一个案例"
+          type="warning"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
   return (
     <div>
       <Breadcrumb
@@ -131,15 +178,29 @@ const PlanningView = () => {
           },
         ]}
       />
-              {caseData && (
-                <>
-                  <Card style={{ marginBottom: 16 }}>
-                    <Title level={4}>{caseData.title}</Title>
-                    <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
-                  </Card>
-                  {caseId && <GitStatus caseId={caseId} />}
-                </>
-              )}
+      {isCaseLoading ? (
+        <Spin size="large" style={{ display: 'block', textAlign: 'center', padding: '40px' }} />
+      ) : caseData ? (
+        <>
+          <Card style={{ marginBottom: 16 }}>
+            <Title level={4}>{caseData.title}</Title>
+            <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+          </Card>
+          {caseId && <GitStatus caseId={caseId} />}
+        </>
+      ) : (
+        <Alert
+          message="案例不存在"
+          description={`案例 ${caseId} 不存在或已被删除`}
+          type="warning"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      )}
       <Card
         title="实现计划"
         extra={
@@ -148,6 +209,7 @@ const PlanningView = () => {
             icon={<SyncOutlined />}
             onClick={handleTriggerPlanning}
             loading={triggerMutation.isPending}
+            disabled={!caseData}
           >
             生成计划
           </Button>
@@ -155,6 +217,18 @@ const PlanningView = () => {
       >
         {isLoading ? (
           <Spin size="large" style={{ display: 'block', textAlign: 'center', padding: '40px' }} />
+        ) : planError ? (
+          <Alert
+            message="加载计划失败"
+            description={planError instanceof Error ? planError.message : '无法加载计划，请重试'}
+            type="error"
+            showIcon
+            action={
+              <Button size="small" onClick={() => refetch()}>
+                重试
+              </Button>
+            }
+          />
         ) : planData ? (
           <Tabs items={tabItems} />
         ) : (
