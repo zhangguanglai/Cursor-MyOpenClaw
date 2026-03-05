@@ -11,8 +11,9 @@ from pathlib import Path
 
 from openclaw_core.llm_router import LLMRouter, LLMMessage
 from openclaw_core.tools import CodeReader, CodeSearcher, ProjectStructure
+from openclaw_core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("openclaw.agents")
 
 
 class PlanningRequest(TypedDict, total=False):

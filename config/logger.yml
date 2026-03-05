@@ -1,0 +1,20 @@
+# OpenClaw 日志配置
+
+# 日志记录器名称
+name: openclaw
+
+# 日志级别: DEBUG, INFO, WARNING, ERROR
+level: INFO
+
+# 文件输出配置（按大小轮转）
+file:
+  path: logs/openclaw.log
+  max_bytes: 10485760  # 10 MB
+  backup_count: 5
+
+# 时间轮转配置（可选）
+# timed_file:
+#   path: logs/openclaw-timed.log
+#   when: midnight  # S, M, H, D, W, midnight
+#   interval: 1
+#   backup_count: 7

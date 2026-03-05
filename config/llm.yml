@@ -15,17 +15,17 @@ providers:
 models:
   planning:
     # 代码/需求规划任务
+    default: "qwen/qwen-plus"
+    candidates:
+      - "qwen/qwen-plus"
+      - "qwen/qwen-coder-plus"
+  
+  coding:
+    # 具体代码生成与重构
     default: "qwen/qwen-coder-plus"
     candidates:
       - "qwen/qwen-coder-plus"
       - "minimax/minimax-coder-2.5"
-  
-  coding:
-    # 具体代码生成与重构
-    default: "minimax/minimax-coder-2.5"
-    candidates:
-      - "minimax/minimax-coder-2.5"
-      - "qwen/qwen-coder-plus"
   
   summary:
     # 报告、总结、说明文档

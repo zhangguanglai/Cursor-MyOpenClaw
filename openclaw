@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+"""OpenClaw CLI 入口脚本"""
+
+from openclaw_cli.cli import cli
+
+if __name__ == '__main__':
+    cli()

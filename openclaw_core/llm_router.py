@@ -11,7 +11,9 @@ import httpx
 import yaml
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+from openclaw_core.logger import get_logger
+
+logger = get_logger("openclaw.llm_router")
 
 Role = Literal["system", "user", "assistant", "tool"]
 
@@ -79,7 +81,7 @@ class OpenAICompatibleProvider:
 
         logger.debug(f"调用 LLM API: {url}, model={payload.get('model')}")
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             try:
                 resp = await client.post(url, headers=headers, json=payload)
                 resp.raise_for_status()
