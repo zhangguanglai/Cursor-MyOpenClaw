@@ -14,6 +14,7 @@ import {
   message,
   Popconfirm,
   Breadcrumb,
+  Alert,
 } from 'antd'
 import { CopyOutlined, CheckCircleOutlined, PlayCircleOutlined, EyeOutlined, HomeOutlined } from '@ant-design/icons'
 import { useState } from 'react'
@@ -31,7 +32,53 @@ const ExecutionView = () => {
   const { caseId } = useParams<{ caseId: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { data: caseData } = useCaseQuery(caseId || '')
+  const { data: caseData, isLoading: isCaseLoading, error: caseError } = useCaseQuery(caseId || '')
+
+  // 错误处理
+  if (caseError) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="加载案例失败"
+          description={caseError instanceof Error ? caseError.message : '未知错误'}
+          type="error"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
+  if (!caseId) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="案例 ID 不存在"
+          description="请从需求中心选择一个案例"
+          type="warning"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
+  if (isCaseLoading) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <Spin size="large" />
+        <p style={{ marginTop: 16 }}>加载案例信息...</p>
+      </div>
+    )
+  }
 
   // 获取任务列表（用于生成补丁）
   const { data: tasks = [], isLoading: isTasksLoading } = useCaseTasksQuery(caseId || '')
@@ -154,15 +201,31 @@ const ExecutionView = () => {
           },
         ]}
       />
-              {caseData && (
-                <>
-                  <Card style={{ marginBottom: 16 }}>
-                    <Title level={4}>{caseData.title}</Title>
-                    <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
-                  </Card>
-                  {caseId && <GitStatus caseId={caseId} />}
-                </>
-              )}
+      {caseData ? (
+        <>
+          <Card style={{ marginBottom: 16 }}>
+            <Title level={4}>{caseData.title}</Title>
+            <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+          </Card>
+          {caseId && (
+            <div style={{ marginBottom: 16 }}>
+              <GitStatus caseId={caseId} />
+            </div>
+          )}
+        </>
+      ) : (
+        <Alert
+          message="案例不存在"
+          description={`案例 ${caseId} 不存在或已被删除`}
+          type="warning"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      )}
       {/* 生成补丁区域 */}
       <Card title="生成补丁" style={{ marginBottom: 24 }}>
         <Space direction="vertical" style={{ width: '100%' }}>
@@ -244,9 +307,20 @@ const ExecutionView = () => {
       {/* 补丁列表 */}
       <Card title="补丁详情" style={{ marginBottom: 24 }}>
         {isPatchesLoading ? (
-          <Spin tip="加载中..." />
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <Spin size="large" tip="加载补丁列表..." />
+          </div>
         ) : filteredSortedPatches.length === 0 ? (
-          <Paragraph type="secondary">暂无补丁，请先生成。</Paragraph>
+          <Alert
+            message="暂无补丁"
+            description={
+              tasks.length === 0
+                ? '请先在规划视图中生成计划并创建任务，然后返回此处生成补丁。'
+                : '请选择一个任务并点击「生成补丁」按钮来生成代码补丁。'
+            }
+            type="info"
+            showIcon
+          />
         ) : (
           <List
             dataSource={filteredSortedPatches}

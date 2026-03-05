@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useParams } from 'react-router-dom'
-import { Card, Space, Row, Col, Spin, Alert, Breadcrumb, Typography } from 'antd'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Card, Space, Row, Col, Spin, Alert, Breadcrumb, Typography, Button } from 'antd'
 import { HomeOutlined } from '@ant-design/icons'
 import { useCaseQuery } from '../../services/cases'
 import { useCaseHistoryQuery } from '../../services/history'
@@ -14,7 +14,7 @@ const { Title } = Typography
 
 const HistoryView = () => {
   const { caseId } = useParams<{ caseId: string }>()
-  const { data: caseData } = useCaseQuery(caseId || '')
+  const { data: caseData, isLoading: isCaseLoading, error: caseError } = useCaseQuery(caseId || '')
   const [filters, setFilters] = useState({
     types: [] as string[],
     startTime: '',
@@ -31,8 +31,55 @@ const HistoryView = () => {
     search: filters.search || undefined,
   }
 
+  const navigate = useNavigate()
   const { data, isLoading, error } = useCaseHistoryQuery(caseId || '', queryParams)
   const history = data?.history || []
+
+  // 错误处理
+  if (caseError) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="加载案例失败"
+          description={caseError instanceof Error ? caseError.message : '未知错误'}
+          type="error"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
+  if (!caseId) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="案例 ID 不存在"
+          description="请从需求中心选择一个案例"
+          type="warning"
+          showIcon
+          action={
+            <Button size="small" onClick={() => navigate('/cases')}>
+              返回需求中心
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
+  if (isCaseLoading) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <Spin size="large" />
+        <p style={{ marginTop: 16 }}>加载案例信息...</p>
+      </div>
+    )
+  }
 
   // 计算统计信息
   const stats = useMemo(() => {
@@ -83,9 +130,52 @@ const HistoryView = () => {
 
   if (error) {
     return (
-      <Card title="开发历史时间线">
-        <Alert message="加载历史记录失败" description={(error as any)?.message} type="error" showIcon />
-      </Card>
+      <div style={{ padding: '24px' }}>
+        <Breadcrumb
+          style={{ marginBottom: 16 }}
+          items={[
+            {
+              href: '/cases',
+              title: (
+                <>
+                  <HomeOutlined />
+                  <span>需求中心</span>
+                </>
+              ),
+            },
+            {
+              title: caseData?.title || `案例 ${caseId}`,
+            },
+            {
+              title: '历史视图',
+            },
+          ]}
+        />
+        <Card title="开发历史时间线">
+          <Alert
+            message="加载历史记录失败"
+            description={
+              <div>
+                <p>{(error as any)?.message || '无法加载历史记录，请稍后重试'}</p>
+                <Button
+                  type="link"
+                  onClick={() => window.location.reload()}
+                  style={{ padding: 0, marginTop: 8 }}
+                >
+                  点击刷新页面
+                </Button>
+              </div>
+            }
+            type="error"
+            showIcon
+            action={
+              <Button size="small" onClick={() => window.location.reload()}>
+                刷新
+              </Button>
+            }
+          />
+        </Card>
+      </div>
     )
   }
 

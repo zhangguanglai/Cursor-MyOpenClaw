@@ -210,11 +210,35 @@ const TestingView = () => {
       )}
       {isLoading ? (
         <Card title="测试建议" loading>
-          <div>加载中...</div>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <Spin size="large" />
+            <p style={{ marginTop: 16 }}>正在加载测试结果...</p>
+          </div>
         </Card>
       ) : error ? (
         <Card title="测试建议">
-          <Alert message="加载测试结果失败" description={(error as any)?.message} type="error" showIcon />
+          <Alert
+            message="加载测试结果失败"
+            description={
+              <div>
+                <p>{(error as any)?.message || '无法加载测试结果，请稍后重试'}</p>
+                <Button
+                  type="link"
+                  onClick={() => refetch()}
+                  style={{ padding: 0, marginTop: 8 }}
+                >
+                  点击重试
+                </Button>
+              </div>
+            }
+            type="error"
+            showIcon
+            action={
+              <Button size="small" onClick={() => refetch()}>
+                重试
+              </Button>
+            }
+          />
         </Card>
       ) : !data ? (
         <Card

@@ -238,7 +238,18 @@ const PlanningView = () => {
         ) : planError ? (
           <Alert
             message="加载计划失败"
-            description={planError instanceof Error ? planError.message : '无法加载计划，请重试'}
+            description={
+              <div>
+                <p>{planError instanceof Error ? planError.message : '无法加载计划，请稍后重试'}</p>
+                <Button
+                  type="link"
+                  onClick={() => refetch()}
+                  style={{ padding: 0, marginTop: 8 }}
+                >
+                  点击重试
+                </Button>
+              </div>
+            }
             type="error"
             showIcon
             action={

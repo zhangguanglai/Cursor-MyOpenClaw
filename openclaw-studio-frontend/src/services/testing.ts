@@ -8,11 +8,19 @@ import type { TestRequestIn, TestResponseOut } from './types';
 
 // 获取测试结果
 export const useGetTestResultsQuery = (caseId: string) => {
-  return useQuery<TestResponseOut>({
+  return useQuery<TestResponseOut | null>({
     queryKey: ['testing', caseId],
     queryFn: async () => {
-      const response = await apiClient.get(`/api/v1/cases/${caseId}/test`);
-      return response.data;
+      try {
+        const response = await apiClient.get(`/api/v1/cases/${caseId}/test`);
+        return response.data;
+      } catch (error: any) {
+        // 如果是 404，说明测试结果不存在，返回 null 而不是抛出错误
+        if (error.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
     },
     enabled: !!caseId,
     retry: false, // 如果不存在测试结果，不重试

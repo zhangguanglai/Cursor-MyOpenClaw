@@ -16,9 +16,9 @@ function App() {
           <Route path="/" element={<Navigate to="/cases" replace />} />
           <Route path="/cases" element={<RequirementCenter />} />
                   <Route path="/cases/:caseId/plan" element={<ErrorBoundary><PlanningView /></ErrorBoundary>} />
-                  <Route path="/cases/:caseId/execution" element={<ExecutionView />} />
+                  <Route path="/cases/:caseId/execution" element={<ErrorBoundary><ExecutionView /></ErrorBoundary>} />
                   <Route path="/cases/:caseId/test" element={<ErrorBoundary><TestingView /></ErrorBoundary>} />
-                  <Route path="/cases/:caseId/history" element={<HistoryView />} />
+                  <Route path="/cases/:caseId/history" element={<ErrorBoundary><HistoryView /></ErrorBoundary>} />
                   <Route path="/knowledge" element={<KnowledgeView />} />
         </Routes>
       </MainLayout>
