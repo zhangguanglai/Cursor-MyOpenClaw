@@ -60,23 +60,23 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         </Button>
       </Space>
 
-              {mode === 'edit' ? (
-                <textarea
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    minHeight: '600px',
-                    padding: '16px',
-                    fontFamily: 'monospace',
-                    fontSize: '14px',
-                    lineHeight: '1.6',
-                    border: '1px solid #d9d9d9',
-                    borderRadius: '6px',
-                    resize: 'vertical',
-                  }}
-                />
+      {mode === 'edit' ? (
+        <textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          style={{
+            flex: 1,
+            width: '100%',
+            minHeight: '600px',
+            padding: '16px',
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            lineHeight: '1.6',
+            border: '1px solid #d9d9d9',
+            borderRadius: '6px',
+            resize: 'vertical',
+          }}
+        />
       ) : (
         <div
           style={{

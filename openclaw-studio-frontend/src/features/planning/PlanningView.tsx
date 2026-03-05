@@ -82,7 +82,7 @@ const PlanningView = () => {
       key: 'plan',
       label: '计划',
       children: planData ? (
-        <div style={{ minHeight: '400px' }}>
+        <div style={{ minHeight: '700px' }}>
           <MarkdownEditor
             markdown={editingMarkdown}
             onSave={handleSavePlan}
