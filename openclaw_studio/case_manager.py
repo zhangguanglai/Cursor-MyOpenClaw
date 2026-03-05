@@ -150,21 +150,40 @@ class CaseManager:
         )
         plan = self.db.create_plan(plan)
 
-        # 创建任务记录
+        # 创建任务记录（检查是否已存在，避免重复创建）
         for task_data in tasks:
             task_id = task_data.get("id", f"task-{uuid.uuid4().hex[:8]}")
-            related_files = json.dumps(task_data.get("related_files", [])) if task_data.get("related_files") else None
-            task = Task(
-                id=task_id,
-                case_id=case_id,
-                plan_id=plan_id,
-                title=task_data.get("title", ""),
-                description=task_data.get("description", ""),
-                status="pending",
-                related_files=related_files,
-                risk_level=task_data.get("risk_level"),
-            )
-            self.db.create_task(task)
+            
+            # 检查任务是否已存在
+            existing_task = self.db.get_task(task_id)
+            if existing_task:
+                # 如果任务已存在，更新它而不是创建新任务
+                related_files = json.dumps(task_data.get("related_files", [])) if task_data.get("related_files") else None
+                updated_task = Task(
+                    id=task_id,
+                    case_id=case_id,
+                    plan_id=plan_id,
+                    title=task_data.get("title", ""),
+                    description=task_data.get("description", ""),
+                    status=existing_task.status,  # 保留原有状态
+                    related_files=related_files,
+                    risk_level=task_data.get("risk_level"),
+                )
+                self.db.update_task(updated_task)
+            else:
+                # 创建新任务
+                related_files = json.dumps(task_data.get("related_files", [])) if task_data.get("related_files") else None
+                task = Task(
+                    id=task_id,
+                    case_id=case_id,
+                    plan_id=plan_id,
+                    title=task_data.get("title", ""),
+                    description=task_data.get("description", ""),
+                    status="pending",
+                    related_files=related_files,
+                    risk_level=task_data.get("risk_level"),
+                )
+                self.db.create_task(task)
 
         # 更新案例状态
         self.db.update_case(case_id, status="planning")
