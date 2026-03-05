@@ -133,6 +133,32 @@ const ExecutionView = () => {
 
   return (
     <div style={{ padding: 24 }}>
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            href: '/cases',
+            title: (
+              <>
+                <HomeOutlined />
+                <span>需求中心</span>
+              </>
+            ),
+          },
+          {
+            title: caseData?.title || `案例 ${caseId}`,
+          },
+          {
+            title: '执行视图',
+          },
+        ]}
+      />
+      {caseData && (
+        <Card style={{ marginBottom: 16 }}>
+          <Title level={4}>{caseData.title}</Title>
+          <p style={{ color: '#666', marginBottom: 0 }}>{caseData.description}</p>
+        </Card>
+      )}
       {/* 生成补丁区域 */}
       <Card title="生成补丁" style={{ marginBottom: 24 }}>
         <Space direction="vertical" style={{ width: '100%' }}>
