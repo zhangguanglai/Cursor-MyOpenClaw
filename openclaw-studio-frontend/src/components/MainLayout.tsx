@@ -3,10 +3,6 @@ import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   FileTextOutlined,
-  UnorderedListOutlined,
-  CodeOutlined,
-  CheckCircleOutlined,
-  HistoryOutlined,
   BookOutlined,
 } from '@ant-design/icons'
 
@@ -25,6 +21,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       key: '/cases',
       icon: <FileTextOutlined />,
       label: '需求中心',
+    },
+    {
+      key: '/knowledge',
+      icon: <BookOutlined />,
+      label: '知识库',
     },
   ]
 
