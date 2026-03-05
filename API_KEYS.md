@@ -4,7 +4,7 @@
 
 ### Qwen API Key
 - **环境变量名**: `QWEN_API_KEY`
-- **当前值**: `sk-sp-5d0278696a1347ad92725d9552182fd9`
+- **当前值**: `sk-fe321dca0bf146ca99df33876ad56bbb` (Qwen 3.5)
 - **用途**: 用于 planning、coding、summary 任务
 
 ### MiniMax API Key
@@ -109,7 +109,9 @@ python examples/llm_router_example.py
 ## 📋 更新记录
 
 ### 2026-03-05
-- 更新 Qwen API Key: `sk-sp-5d0278696a1347ad92725d9552182fd9`
+- 更新 Qwen API Key: `sk-fe321dca0bf146ca99df33876ad56bbb` (Qwen 3.5，第三次更新)
+- 之前: `sk-sp-59e0db34e07b42a4932b596212d03ee5` (已失效)
+- 更早: `sk-sp-5d0278696a1347ad92725d9552182fd9` (已失效)
 
 ---
 

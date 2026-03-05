@@ -88,9 +88,15 @@ class CaseDatabase:
             db_path: 数据库文件路径
         """
         self.db_path = Path(db_path)
-        self.conn = sqlite3.connect(str(self.db_path))
+        # 使用 check_same_thread=False 以支持多线程（FastAPI 异步环境）
+        self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self._init_tables()
+    
+    def close(self):
+        """关闭数据库连接"""
+        if self.conn:
+            self.conn.close()
 
     def _init_tables(self):
         """初始化数据库表"""
