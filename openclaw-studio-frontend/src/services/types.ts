@@ -53,6 +53,10 @@ export interface PatchOut {
   file_path: string;
   description: string;
   content: string;
+  id?: string; // 补丁唯一 ID（后端应返回，用于应用/复制）
+  created_at?: string; // 生成时间（用于排序）
+  applied_at?: string; // 应用时间（null = 未应用）
+  status?: 'generated' | 'applied'; // 显式状态（兼容 UI 展示）
 }
 
 export interface TestRequestIn {

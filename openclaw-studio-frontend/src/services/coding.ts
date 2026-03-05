@@ -30,8 +30,42 @@ export const useCasePatchesQuery = (caseId: string) => {
     queryKey: ['patches', caseId],
     queryFn: async () => {
       const response = await apiClient.get(`/api/v1/cases/${caseId}/patches`);
-      return response.data;
+      // 为每个补丁添加 id（如果没有）
+      return response.data.map((patch: PatchOut, index: number) => ({
+        ...patch,
+        id: patch.id || patch.task_id || `patch-${index}`,
+        content: patch.content || patch.diff || '',
+        created_at: patch.created_at || new Date().toISOString(),
+      }));
     },
     enabled: !!caseId,
+  });
+};
+
+// 获取任务列表（用于生成补丁）
+export const useCaseTasksQuery = (caseId: string) => {
+  return useQuery({
+    queryKey: ['tasks', caseId],
+    queryFn: async () => {
+      // 从 plan 接口获取任务列表
+      const response = await apiClient.get(`/api/v1/cases/${caseId}/plan`);
+      return response.data.tasks || [];
+    },
+    enabled: !!caseId,
+  });
+};
+
+// 应用补丁 Mutation
+export const useApplyPatchMutation = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ caseId, patchId }: { caseId: string; patchId: string }) => {
+      const response = await apiClient.patch(`/api/v1/cases/${caseId}/patches/${patchId}/apply`);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['patches', variables.caseId] });
+    },
   });
 };

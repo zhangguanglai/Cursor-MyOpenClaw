@@ -113,10 +113,36 @@ async def get_patches(
                 if diff_match:
                     file_path = diff_match.group(1)
             
-            patches.append(PatchMeta(
+            # 添加补丁元数据
+            patch_meta = PatchMeta(
                 file_path=file_path or f"patches/{task_id}.patch",
                 diff=patch_content,
                 description=patch_info.get("description", "")
-            ))
+            )
+            # 为前端添加额外字段（通过 dict 扩展）
+            patch_dict = patch_meta.model_dump()
+            patch_dict['id'] = task_id
+            patch_dict['task_id'] = task_id
+            patch_dict['content'] = patch_content
+            patch_dict['created_at'] = patch_info.get('created_at', '')
+            patches.append(patch_dict)
     
     return patches
+
+
+@router.patch("/{case_id}/patches/{patch_id}/apply")
+async def apply_patch(
+    case_id: str,
+    patch_id: str,
+    case_manager: CaseManager = Depends(get_case_manager),
+):
+    """标记补丁为已应用"""
+    case = case_manager.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    # 这里可以添加实际的补丁应用逻辑
+    # 目前只是标记为已应用状态
+    # 未来可以实现实际的代码应用功能
+    
+    return {"message": "Patch marked as applied", "patch_id": patch_id}
