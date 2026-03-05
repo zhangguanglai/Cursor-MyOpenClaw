@@ -5,6 +5,7 @@ import PlanningView from './features/planning/PlanningView'
 import ExecutionView from './features/execution/ExecutionView'
 import TestingView from './features/testing/TestingView'
 import HistoryView from './features/history/HistoryView'
+import KnowledgeView from './features/knowledge/KnowledgeView'
 
 function App() {
   return (
@@ -13,10 +14,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/cases" replace />} />
           <Route path="/cases" element={<RequirementCenter />} />
-          <Route path="/cases/:caseId/plan" element={<PlanningView />} />
-          <Route path="/cases/:caseId/execution" element={<ExecutionView />} />
-          <Route path="/cases/:caseId/test" element={<TestingView />} />
-          <Route path="/cases/:caseId/history" element={<HistoryView />} />
+                  <Route path="/cases/:caseId/plan" element={<PlanningView />} />
+                  <Route path="/cases/:caseId/execution" element={<ExecutionView />} />
+                  <Route path="/cases/:caseId/test" element={<TestingView />} />
+                  <Route path="/cases/:caseId/history" element={<HistoryView />} />
+                  <Route path="/knowledge" element={<KnowledgeView />} />
         </Routes>
       </MainLayout>
     </BrowserRouter>

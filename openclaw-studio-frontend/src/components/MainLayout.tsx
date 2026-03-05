@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -7,6 +7,7 @@ import {
   CodeOutlined,
   CheckCircleOutlined,
   HistoryOutlined,
+  BookOutlined,
 } from '@ant-design/icons'
 
 const { Header, Sider } = Layout
