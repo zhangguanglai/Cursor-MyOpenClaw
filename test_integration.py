@@ -3,6 +3,10 @@
 import requests
 import json
 import sys
+import io
+
+# 设置 UTF-8 编码
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 def test_backend():
     """测试后端 API"""
@@ -89,7 +93,7 @@ def test_frontend():
         print("   💡 请确保前端服务正在运行: cd openclaw-studio-frontend && npm run dev")
 
 def main():
-    print("\n🚀 开始前后端集成测试\n")
+    print("\n开始前后端集成测试\n")
     
     # 测试后端
     case_id = test_backend()
