@@ -60,3 +60,7 @@ Thumbs.db
 cases/
 *.plan.md
 *.patch
+
+# API Keys (should not be committed)
+API_KEYS.md
+.env.local
