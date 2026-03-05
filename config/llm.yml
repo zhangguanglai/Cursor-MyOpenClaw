@@ -1,0 +1,34 @@
+# LLM Router 配置文件
+# 配置多个 Provider 和模型策略
+
+providers:
+  qwen:
+    type: openai-compatible
+    base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    api_key_env: "QWEN_API_KEY"
+  
+  minimax:
+    type: openai-compatible
+    base_url: "https://api.minimax.chat/v1"
+    api_key_env: "MINIMAX_API_KEY"
+
+models:
+  planning:
+    # 代码/需求规划任务
+    default: "qwen/qwen-coder-plus"
+    candidates:
+      - "qwen/qwen-coder-plus"
+      - "minimax/minimax-coder-2.5"
+  
+  coding:
+    # 具体代码生成与重构
+    default: "minimax/minimax-coder-2.5"
+    candidates:
+      - "minimax/minimax-coder-2.5"
+      - "qwen/qwen-coder-plus"
+  
+  summary:
+    # 报告、总结、说明文档
+    default: "qwen/qwen-plus"
+    candidates:
+      - "qwen/qwen-plus"
