@@ -123,12 +123,19 @@ class LLMRouter:
         self.providers: Dict[str, OpenAICompatibleProvider] = {}
         for provider_name, provider_config in self.config.get("providers", {}).items():
             if provider_config.get("type") == "openai-compatible":
-                self.providers[provider_name] = OpenAICompatibleProvider(
-                    base_url=provider_config["base_url"],
-                    api_key_env=provider_config["api_key_env"],
-                )
+                try:
+                    self.providers[provider_name] = OpenAICompatibleProvider(
+                        base_url=provider_config["base_url"],
+                        api_key_env=provider_config["api_key_env"],
+                    )
+                    logger.info(f"成功初始化 Provider: {provider_name}")
+                except ValueError as e:
+                    logger.warning(f"跳过 Provider {provider_name}: {e}")
             else:
                 logger.warning(f"未知的 Provider 类型: {provider_config.get('type')}")
+        
+        if not self.providers:
+            raise ValueError("没有可用的 Provider，请至少配置一个 API Key")
 
     @staticmethod
     def _load_config(config_path: str) -> Dict[str, Any]:
