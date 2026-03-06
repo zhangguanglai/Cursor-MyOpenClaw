@@ -43,6 +43,17 @@ class SearchResponse(BaseModel):
     total: int
 
 
+class UpdateItemRequest(BaseModel):
+    """更新知识库项请求模型"""
+    content: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+class TagOperationRequest(BaseModel):
+    """标签操作请求模型"""
+    tags: List[str]
+
+
 # 依赖注入
 def get_knowledge_base() -> KnowledgeBase:
     """获取知识库实例"""
@@ -51,18 +62,26 @@ def get_knowledge_base() -> KnowledgeBase:
 
 @router.get("/search", response_model=SearchResponse)
 async def search_knowledge(
-    q: str = Query(..., description="搜索关键词"),
+    q: str = Query(..., description="搜索关键词（支持多关键词，空格分隔）"),
     category: Optional[str] = Query(None, description="类别筛选"),
     tags: Optional[str] = Query(None, description="标签筛选（逗号分隔）"),
+    use_regex: bool = Query(False, description="是否使用正则表达式"),
+    highlight: bool = Query(False, description="是否高亮匹配内容"),
     knowledge_base: KnowledgeBase = Depends(get_knowledge_base),
 ):
-    """搜索知识库"""
+    """搜索知识库（支持高级搜索）"""
     try:
         tag_list = tags.split(",") if tags else None
         if tag_list:
             tag_list = [tag.strip() for tag in tag_list]
         
-        results = knowledge_base.search(q, category=category, tags=tag_list)
+        results = knowledge_base.search(
+            q, 
+            category=category, 
+            tags=tag_list,
+            use_regex=use_regex,
+            highlight=highlight
+        )
         
         return SearchResponse(
             results=[KnowledgeItemOut(**item.__dict__) for item in results],
@@ -115,6 +134,67 @@ async def list_items(
     except Exception as e:
         logger.error(f"列出知识库项失败: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to list items: {str(e)}")
+
+
+@router.put("/items/{item_path:path}")
+async def update_item(
+    item_path: str,
+    request: UpdateItemRequest,
+    knowledge_base: KnowledgeBase = Depends(get_knowledge_base),
+):
+    """更新知识库项（编辑内容或标签）"""
+    try:
+        success = knowledge_base.update_item(
+            item_path=item_path,
+            content=request.content,
+            tags=request.tags
+        )
+        if not success:
+            raise HTTPException(status_code=404, detail="Item not found or update failed")
+        return {"message": "Item updated successfully", "path": item_path}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"更新知识库项失败: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update item: {str(e)}")
+
+
+@router.post("/items/{item_path:path}/tags")
+async def add_tags(
+    item_path: str,
+    request: TagOperationRequest,
+    knowledge_base: KnowledgeBase = Depends(get_knowledge_base),
+):
+    """添加标签到知识库项"""
+    try:
+        success = knowledge_base.add_tags(item_path, request.tags)
+        if not success:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return {"message": "Tags added successfully", "path": item_path}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"添加标签失败: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to add tags: {str(e)}")
+
+
+@router.delete("/items/{item_path:path}/tags")
+async def remove_tags(
+    item_path: str,
+    request: TagOperationRequest,
+    knowledge_base: KnowledgeBase = Depends(get_knowledge_base),
+):
+    """从知识库项中移除标签"""
+    try:
+        success = knowledge_base.remove_tags(item_path, request.tags)
+        if not success:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return {"message": "Tags removed successfully", "path": item_path}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"移除标签失败: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to remove tags: {str(e)}")
 
 
 @router.post("/cases/{case_id}/archive")

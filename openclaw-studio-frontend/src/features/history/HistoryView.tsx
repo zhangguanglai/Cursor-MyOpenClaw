@@ -14,6 +14,9 @@ const { Title } = Typography
 
 const HistoryView = () => {
   const { caseId } = useParams<{ caseId: string }>()
+  const navigate = useNavigate()
+  
+  // 所有 hooks 必须在条件返回之前调用
   const { data: caseData, isLoading: isCaseLoading, error: caseError } = useCaseQuery(caseId || '')
   const [filters, setFilters] = useState({
     types: [] as string[],
@@ -31,55 +34,8 @@ const HistoryView = () => {
     search: filters.search || undefined,
   }
 
-  const navigate = useNavigate()
   const { data, isLoading, error } = useCaseHistoryQuery(caseId || '', queryParams)
   const history = data?.history || []
-
-  // 错误处理
-  if (caseError) {
-    return (
-      <div style={{ padding: '24px' }}>
-        <Alert
-          message="加载案例失败"
-          description={caseError instanceof Error ? caseError.message : '未知错误'}
-          type="error"
-          showIcon
-          action={
-            <Button size="small" onClick={() => navigate('/cases')}>
-              返回需求中心
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
-
-  if (!caseId) {
-    return (
-      <div style={{ padding: '24px' }}>
-        <Alert
-          message="案例 ID 不存在"
-          description="请从需求中心选择一个案例"
-          type="warning"
-          showIcon
-          action={
-            <Button size="small" onClick={() => navigate('/cases')}>
-              返回需求中心
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
-
-  if (isCaseLoading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <Spin size="large" />
-        <p style={{ marginTop: 16 }}>加载案例信息...</p>
-      </div>
-    )
-  }
 
   // 计算统计信息
   const stats = useMemo(() => {

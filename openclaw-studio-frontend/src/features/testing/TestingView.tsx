@@ -52,18 +52,53 @@ const parseChecklist = (raw: string[]): { text: string; checked: boolean }[] => 
 
 const TestingView = () => {
   const { caseId } = useParams<{ caseId: string }>()
+  
+  // 所有 hooks 必须在条件返回之前调用
   const { data: caseData, isLoading: isCaseLoading, error: caseError } = useCaseQuery(caseId || '')
   const [checklistState, setChecklistState] = useState<{ text: string; checked: boolean }[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [severityFilter, setSeverityFilter] = useState<string>('all')
-
+  
   // Fetch test results
   const { data, isLoading, error, refetch } = useGetTestResultsQuery(caseId || '')
-
+  
   // Generate mutation
   const generateMutation = useGenerateTestMutation(caseId || '')
 
-  // 错误处理
+  // Initialize checklist from API or localStorage
+  useEffect(() => {
+    if (data?.checklist || data?.manual_checklist) {
+      const checklist = data.checklist || data.manual_checklist || []
+      const parsed = parseChecklist(checklist)
+      // Try restore from localStorage
+      try {
+        const saved = localStorage.getItem(`test-checklist-${caseId}`)
+        if (saved) {
+          const restored = JSON.parse(saved)
+          if (Array.isArray(restored) && restored.length === parsed.length) {
+            setChecklistState(restored)
+            return
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load checklist from localStorage', e)
+      }
+      setChecklistState(parsed)
+    }
+  }, [data?.checklist, data?.manual_checklist, caseId])
+
+  // Save to localStorage when changed
+  useEffect(() => {
+    if (caseId && checklistState.length > 0) {
+      try {
+        localStorage.setItem(`test-checklist-${caseId}`, JSON.stringify(checklistState))
+      } catch (e) {
+        console.warn('Failed to save checklist to localStorage', e)
+      }
+    }
+  }, [caseId, checklistState])
+
+  // 错误处理（在所有 hooks 之后）
   if (caseError) {
     return (
       <div style={{ padding: '24px' }}>
@@ -99,38 +134,14 @@ const TestingView = () => {
     )
   }
 
-  // Initialize checklist from API or localStorage
-  useEffect(() => {
-    if (data?.checklist || data?.manual_checklist) {
-      const checklist = data.checklist || data.manual_checklist || []
-      const parsed = parseChecklist(checklist)
-      // Try restore from localStorage
-      try {
-        const saved = localStorage.getItem(`test-checklist-${caseId}`)
-        if (saved) {
-          const restored = JSON.parse(saved)
-          if (Array.isArray(restored) && restored.length === parsed.length) {
-            setChecklistState(restored)
-            return
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to load checklist from localStorage', e)
-      }
-      setChecklistState(parsed)
-    }
-  }, [data?.checklist, data?.manual_checklist, caseId])
+  // 计算过滤后的问题列表
+  const filteredIssues = data?.potential_issues?.filter(
+    (issue) => severityFilter === 'all' || issue.severity === severityFilter
+  ) || []
 
-  // Save to localStorage when changed
-  useEffect(() => {
-    if (caseId && checklistState.length > 0) {
-      try {
-        localStorage.setItem(`test-checklist-${caseId}`, JSON.stringify(checklistState))
-      } catch (e) {
-        console.warn('Failed to save checklist to localStorage', e)
-      }
-    }
-  }, [caseId, checklistState])
+  // 提取测试数据
+  const test_cases = data?.test_cases || []
+  const generated_at = data?.generated_at
 
   const handleToggleCheck = (index: number) => {
     setChecklistState((prev) =>

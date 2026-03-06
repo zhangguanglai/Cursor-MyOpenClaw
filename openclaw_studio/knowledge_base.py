@@ -115,20 +115,44 @@ class KnowledgeBase:
             logger.error(f"加载文件失败 {file_path}: {e}")
             return None
 
-    def search(self, query: str, category: Optional[str] = None, tags: Optional[List[str]] = None) -> List[KnowledgeItem]:
+    def search(
+        self, 
+        query: str, 
+        category: Optional[str] = None, 
+        tags: Optional[List[str]] = None,
+        use_regex: bool = False,
+        highlight: bool = False
+    ) -> List[KnowledgeItem]:
         """
-        搜索知识库
+        搜索知识库（支持高级搜索）
 
         Args:
-            query: 搜索关键词
+            query: 搜索关键词（支持多关键词，用空格分隔）
             category: 类别筛选（rules, playbooks, templates, cases）
             tags: 标签筛选
+            use_regex: 是否使用正则表达式
+            highlight: 是否高亮匹配内容（返回时在 content 中添加标记）
 
         Returns:
             匹配的知识库项列表
         """
         results = []
-        query_lower = query.lower()
+        
+        # 处理多关键词搜索
+        if use_regex:
+            # 正则表达式模式
+            try:
+                pattern = re.compile(query, re.IGNORECASE)
+                keywords = None
+            except re.error:
+                # 如果正则表达式无效，回退到普通搜索
+                logger.warning(f"无效的正则表达式: {query}，使用普通搜索")
+                use_regex = False
+                keywords = [q.strip() for q in query.split() if q.strip()]
+        else:
+            # 多关键词搜索（空格分隔）
+            keywords = [q.strip() for q in query.split() if q.strip()]
+            pattern = None
         
         # 遍历所有 Markdown 文件
         for md_file in self.base_path.rglob("*.md"):
@@ -149,14 +173,108 @@ class KnowledgeBase:
                 continue
             
             # 搜索匹配
-            if (query_lower in item.title.lower() or 
-                query_lower in item.content.lower()):
+            matched = False
+            if use_regex and pattern:
+                # 正则表达式匹配
+                matched = bool(pattern.search(item.title) or pattern.search(item.content))
+            elif keywords:
+                # 多关键词匹配（所有关键词都必须匹配）
+                title_lower = item.title.lower()
+                content_lower = item.content.lower()
+                matched = all(
+                    keyword.lower() in title_lower or keyword.lower() in content_lower
+                    for keyword in keywords
+                )
+            else:
+                # 单关键词匹配
+                query_lower = query.lower()
+                matched = (query_lower in item.title.lower() or 
+                          query_lower in item.content.lower())
+            
+            if matched:
+                # 如果需要高亮，添加高亮标记
+                if highlight:
+                    item = self._highlight_matches(item, query, use_regex, keywords, pattern)
                 results.append(item)
         
         # 按更新时间排序（最新的在前）
         results.sort(key=lambda x: x.updated_at or "", reverse=True)
         
         return results
+    
+    def _highlight_matches(
+        self, 
+        item: KnowledgeItem, 
+        query: str, 
+        use_regex: bool,
+        keywords: Optional[List[str]],
+        pattern: Optional[re.Pattern]
+    ) -> KnowledgeItem:
+        """
+        高亮匹配的内容
+        
+        Args:
+            item: 知识库项
+            query: 搜索查询
+            use_regex: 是否使用正则表达式
+            keywords: 关键词列表
+            pattern: 正则表达式模式
+            
+        Returns:
+            高亮后的知识库项（新实例）
+        """
+        from copy import deepcopy
+        highlighted = deepcopy(item)
+        
+        # 高亮标题
+        if use_regex and pattern:
+            highlighted.title = self._highlight_text(highlighted.title, pattern)
+        elif keywords:
+            for keyword in keywords:
+                highlighted.title = self._highlight_text(highlighted.title, keyword)
+        else:
+            highlighted.title = self._highlight_text(highlighted.title, query)
+        
+        # 高亮内容（只高亮前 500 个字符以保持性能）
+        content_preview = highlighted.content[:500]
+        if use_regex and pattern:
+            content_preview = self._highlight_text(content_preview, pattern)
+        elif keywords:
+            for keyword in keywords:
+                content_preview = self._highlight_text(content_preview, keyword)
+        else:
+            content_preview = self._highlight_text(content_preview, query)
+        
+        # 如果内容被截断，添加省略号
+        if len(highlighted.content) > 500:
+            content_preview += "..."
+        
+        highlighted.content = content_preview
+        return highlighted
+    
+    def _highlight_text(self, text: str, pattern: str | re.Pattern) -> str:
+        """
+        在文本中高亮匹配的模式
+        
+        Args:
+            text: 原始文本
+            pattern: 匹配模式（字符串或正则表达式）
+            
+        Returns:
+            高亮后的文本（使用 <mark> 标签）
+        """
+        if isinstance(pattern, re.Pattern):
+            # 正则表达式匹配
+            def replacer(match):
+                return f"<mark>{match.group(0)}</mark>"
+            return pattern.sub(replacer, text)
+        else:
+            # 字符串匹配（不区分大小写）
+            import re as re_module
+            pattern_re = re_module.compile(re_module.escape(pattern), re_module.IGNORECASE)
+            def replacer(match):
+                return f"<mark>{match.group(0)}</mark>"
+            return pattern_re.sub(replacer, text)
 
     def get_template(self, template_name: str) -> Optional[str]:
         """

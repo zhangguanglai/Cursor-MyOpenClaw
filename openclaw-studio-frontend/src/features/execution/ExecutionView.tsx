@@ -32,9 +32,32 @@ const ExecutionView = () => {
   const { caseId } = useParams<{ caseId: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  
+  // 所有 hooks 必须在条件返回之前调用
   const { data: caseData, isLoading: isCaseLoading, error: caseError } = useCaseQuery(caseId || '')
+  
+  // 获取任务列表（用于生成补丁）
+  const { data: tasks = [], isLoading: isTasksLoading } = useCaseTasksQuery(caseId || '')
+  
+  // 获取补丁列表
+  const { data: patches = [], isLoading: isPatchesLoading } = useCasePatchesQuery(caseId || '')
+  
+  // 生成补丁 Mutation
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('')
+  const generateMutation = useGenerateCodeMutation(caseId || '', selectedTaskId)
+  
+  // 应用补丁 Mutation
+  const applyMutation = useApplyPatchMutation()
+  
+  // 状态管理
+  const [filterTaskId, setFilterTaskId] = useState<string>('')
+  const [filterPath, setFilterPath] = useState<string>('')
+  const [sortBy, setSortBy] = useState<'task_id' | 'created_at'>('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [selectedPatch, setSelectedPatch] = useState<PatchOut | null>(null)
+  const [showDiffModal, setShowDiffModal] = useState(false)
 
-  // 错误处理
+  // 错误处理（在所有 hooks 之后）
   if (caseError) {
     return (
       <div style={{ padding: '24px' }}>
@@ -79,27 +102,6 @@ const ExecutionView = () => {
       </div>
     )
   }
-
-  // 获取任务列表（用于生成补丁）
-  const { data: tasks = [], isLoading: isTasksLoading } = useCaseTasksQuery(caseId || '')
-
-  // 获取补丁列表
-  const { data: patches = [], isLoading: isPatchesLoading } = useCasePatchesQuery(caseId || '')
-
-  // 生成补丁 Mutation
-  const [selectedTaskId, setSelectedTaskId] = useState<string>('')
-  const generateMutation = useGenerateCodeMutation(caseId || '', selectedTaskId)
-
-  // 应用补丁 Mutation
-  const applyMutation = useApplyPatchMutation()
-
-  // 状态管理
-  const [filterTaskId, setFilterTaskId] = useState<string>('')
-  const [filterPath, setFilterPath] = useState<string>('')
-  const [sortBy, setSortBy] = useState<'task_id' | 'created_at'>('created_at')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [selectedPatch, setSelectedPatch] = useState<PatchOut | null>(null)
-  const [showDiffModal, setShowDiffModal] = useState(false)
 
   // 本地过滤 & 排序
   const filteredSortedPatches = [...patches]

@@ -4,13 +4,17 @@
 提供生成代码补丁的接口。
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List
+from fastapi import APIRouter, HTTPException, Depends, Query
+from typing import List, Optional
+from pathlib import Path
 
 from openclaw_studio.case_manager import CaseManager
 from openclaw_studio.models import CodingRequestIn, CodingResponseOut, PatchMeta
 from openclaw_studio.api.dependencies import get_case_manager, get_coding_agent
 from openclaw_core.agents import CodingAgent
+from openclaw_core.logger import get_logger
+
+logger = get_logger("openclaw.api.coding")
 
 router = APIRouter(prefix="/cases", tags=["Coding"])
 
@@ -143,15 +147,99 @@ async def get_patches(
 async def apply_patch(
     case_id: str,
     patch_id: str,
+    commit: bool = Query(False, description="是否提交到 Git"),
+    commit_message: Optional[str] = Query(None, description="提交信息"),
     case_manager: CaseManager = Depends(get_case_manager),
 ):
-    """标记补丁为已应用"""
+    """
+    应用补丁到代码库
+    
+    Args:
+        case_id: 案例 ID
+        patch_id: 补丁 ID（通常是 task_id）
+        commit: 是否提交到 Git
+        commit_message: 提交信息（如果 commit=True）
+    """
+    from openclaw_core.patch_applier import PatchApplier, PatchApplyResult
+    from openclaw_studio.api.v1.git import get_git_tools
+    
     case = case_manager.get_case(case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     
-    # 这里可以添加实际的补丁应用逻辑
-    # 目前只是标记为已应用状态
-    # 未来可以实现实际的代码应用功能
+    # 加载补丁内容
+    patch_content = case_manager.storage.load_patch(case_id, patch_id)
+    if not patch_content:
+        raise HTTPException(status_code=404, detail="Patch not found")
     
-    return {"message": "Patch marked as applied", "patch_id": patch_id}
+    # 获取 Git 工具（如果案例关联了仓库）
+    git_tools = None
+    if case.repo_path:
+        try:
+            git_tools = get_git_tools(case_id, case_manager)
+        except Exception as e:
+            logger.warning(f"无法初始化 Git 工具: {e}")
+    
+    # 创建补丁应用器
+    if git_tools:
+        applier = PatchApplier(git_tools=git_tools)
+    elif case.repo_path:
+        applier = PatchApplier(repo_path=case.repo_path)
+    else:
+        # 如果没有关联仓库，使用项目根目录
+        import os
+        repo_path = os.getcwd()
+        applier = PatchApplier(repo_path=repo_path)
+    
+    try:
+        if commit and git_tools:
+            # 应用并提交到 Git
+            if not commit_message:
+                task = case_manager.get_task(patch_id)
+                commit_message = f"Apply patch: {task.title if task else patch_id}"
+            
+            result, message, details = applier.apply_patch_with_git(
+                patch_content=patch_content,
+                commit_message=commit_message,
+                dry_run=False
+            )
+        else:
+            # 只应用补丁，不提交
+            result, message, details = applier.apply_patch(
+                patch_content=patch_content,
+                dry_run=False
+            )
+        
+        if result == PatchApplyResult.SUCCESS:
+            # 更新补丁状态（如果数据库支持）
+            # 这里可以添加数据库更新逻辑
+            
+            return {
+                "message": message,
+                "patch_id": patch_id,
+                "result": "success",
+                "details": details
+            }
+        elif result == PatchApplyResult.CONFLICT:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "message": message,
+                    "result": "conflict",
+                    "details": details
+                }
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": message,
+                    "result": "error",
+                    "details": details
+                }
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"应用补丁失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"应用补丁失败: {str(e)}")
