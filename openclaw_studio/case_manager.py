@@ -37,6 +37,7 @@ class CaseManager:
         description: str,
         repo_path: Optional[str] = None,
         branch: Optional[str] = None,
+        check_duplicate: bool = True,
     ) -> Case:
         """
         创建新案例
@@ -46,10 +47,20 @@ class CaseManager:
             description: 案例描述
             repo_path: 仓库路径
             branch: 分支名称
+            check_duplicate: 是否检查重复（默认 True）
 
         Returns:
             创建的案例对象
         """
+        # 检查是否已存在相同标题的案例（可选）
+        if check_duplicate:
+            existing_cases = self.db.list_cases()
+            for case in existing_cases:
+                if case.title == title and case.status != "archived":
+                    logger.warning(f"已存在相同标题的案例: {case.id} ({case.title})")
+                    # 返回现有案例而不是创建新的
+                    return case
+        
         # 如果提供了 repo_path，验证 Git 仓库
         if repo_path:
             try:

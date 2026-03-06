@@ -215,6 +215,19 @@ class CaseDatabase:
             cursor.execute("SELECT * FROM cases ORDER BY created_at DESC")
         return [Case(**dict(row)) for row in cursor.fetchall()]
 
+    def delete_case(self, case_id: str) -> bool:
+        """删除案例"""
+        cursor = self.conn.cursor()
+        # 删除关联的数据（级联删除）
+        cursor.execute("DELETE FROM agent_runs WHERE case_id = ?", (case_id,))
+        cursor.execute("DELETE FROM test_records WHERE case_id = ?", (case_id,))
+        cursor.execute("DELETE FROM patches WHERE case_id = ?", (case_id,))
+        cursor.execute("DELETE FROM tasks WHERE case_id = ?", (case_id,))
+        cursor.execute("DELETE FROM plans WHERE case_id = ?", (case_id,))
+        cursor.execute("DELETE FROM cases WHERE id = ?", (case_id,))
+        self.conn.commit()
+        return cursor.rowcount > 0
+
     def update_case(self, case_id: str, **kwargs) -> bool:
         """更新案例"""
         kwargs['updated_at'] = datetime.now().isoformat()

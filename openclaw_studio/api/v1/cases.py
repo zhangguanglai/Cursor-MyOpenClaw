@@ -85,3 +85,17 @@ async def list_cases(case_manager: CaseManager = Depends(get_case_manager)):
         )
         for case in cases
     ]
+
+# Delete a case
+@router.delete("/{case_id}")
+async def delete_case(case_id: str, case_manager: CaseManager = Depends(get_case_manager)):
+    """删除案例及其所有关联数据"""
+    case = case_manager.get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    success = case_manager.delete_case(case_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete case")
+    
+    return {"message": "Case deleted successfully", "case_id": case_id}
