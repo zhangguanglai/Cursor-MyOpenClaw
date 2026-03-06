@@ -61,9 +61,10 @@ const PlanningView = () => {
       })
       message.success('规划生成成功')
       refetch()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Planning generation error:', error)
-      message.error('规划生成失败')
+      const errorMessage = error?.response?.data?.detail || error?.message || '规划生成失败，请检查后端日志'
+      message.error(`规划生成失败: ${errorMessage}`)
     }
   }
 

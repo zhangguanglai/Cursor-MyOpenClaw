@@ -12,6 +12,9 @@ from openclaw_studio.case_manager import CaseManager
 from openclaw_studio.models import PlanningRequestIn, PlanningResponseOut, TaskOut
 from openclaw_studio.api.dependencies import get_case_manager, get_planning_agent
 from openclaw_core.agents import PlanningAgent
+from openclaw_core.logger import get_logger
+
+logger = get_logger("openclaw.api.planning")
 
 router = APIRouter(prefix="/cases", tags=["Planning"])
 
@@ -73,12 +76,21 @@ async def trigger_planning(
         )
     except Exception as e:
         import traceback
+        import os
         error_detail = str(e)
         error_traceback = traceback.format_exc()
-        logger.error(f"Planning failed: {error_detail}\n{error_traceback}")
+        
+        # 检查是否是 API Key 未配置的问题
+        api_key_configured = bool(os.getenv('QWEN_API_KEY') or os.getenv('MINIMAX_API_KEY'))
+        if not api_key_configured:
+            error_detail = "LLM API Key 未配置。请设置环境变量 QWEN_API_KEY 或 MINIMAX_API_KEY。"
+            logger.error(f"Planning failed: {error_detail}")
+        else:
+            logger.error(f"Planning failed: {error_detail}\n{error_traceback}")
+        
         raise HTTPException(
             status_code=500,
-            detail=f"Planning failed: {error_detail}"
+            detail=error_detail
         )
 
 
