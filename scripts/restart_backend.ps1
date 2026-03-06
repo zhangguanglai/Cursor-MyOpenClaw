@@ -41,7 +41,15 @@ Write-Host "     请在新窗口中查看启动日志" -ForegroundColor Yellow
 Write-Host ""
 
 # 在新窗口中启动
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD'; `$env:QWEN_API_KEY='sk-fe321dca0bf146ca99df33876ad56bbb'; python start_backend.py"
+$backendScript = @"
+cd '$PWD'
+`$env:QWEN_API_KEY='sk-fe321dca0bf146ca99df33876ad56bbb'
+Write-Host 'QWEN_API_KEY 已设置' -ForegroundColor Green
+Write-Host '正在启动后端服务...' -ForegroundColor Yellow
+python start_backend.py
+"@
+
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendScript
 
 Write-Host "✅ 后端服务已在新窗口中启动" -ForegroundColor Green
 Write-Host ""
