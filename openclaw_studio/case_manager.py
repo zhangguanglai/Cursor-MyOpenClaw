@@ -190,6 +190,7 @@ class CaseManager:
         plan = self.db.create_plan(plan)
 
         # 创建任务记录（检查是否已存在，避免重复创建）
+        logger.info(f"保存 {len(tasks)} 个任务到数据库")
         for task_data in tasks:
             task_id = task_data.get("id", f"task-{uuid.uuid4().hex[:8]}")
             
@@ -212,7 +213,13 @@ class CaseManager:
                     related_files=related_files,
                     risk_level=task_data.get("risk_level"),
                 )
-                self.db.create_task(task)
+                try:
+                    self.db.create_task(task)
+                    logger.debug(f"任务 {task_id} 已保存到数据库")
+                except Exception as e:
+                    logger.error(f"保存任务 {task_id} 失败: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
 
         # 更新案例状态
         self.db.update_case(case_id, status="planning")

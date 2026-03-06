@@ -41,11 +41,23 @@ async def trigger_planning(
         # 调用 PlanningAgent
         result = await agent.generate_plan(planning_request)
         
+        # 记录任务数量
+        tasks_from_agent = result.get("tasks", [])
+        logger.info(f"PlanningAgent 返回 {len(tasks_from_agent)} 个任务")
+        
+        # 如果任务列表为空，尝试从 plan.json 加载（可能是之前保存的）
+        if not tasks_from_agent:
+            logger.warning("PlanningAgent 返回的任务列表为空，尝试从文件加载")
+            plan_json = case_manager.storage.load_plan_json(case_id)
+            if plan_json:
+                logger.info(f"从 plan.json 加载了 {len(plan_json)} 个任务")
+                tasks_from_agent = plan_json
+        
         # 保存计划
         plan = case_manager.save_plan(
             case_id=case_id,
             plan_markdown=result["plan_markdown"],
-            tasks=result.get("tasks", []),
+            tasks=tasks_from_agent,
         )
         
         # 记录 Agent 调用
