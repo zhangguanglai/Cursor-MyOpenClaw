@@ -106,6 +106,33 @@ class CaseManager:
         """列出案例"""
         return self.db.list_cases(status)
 
+    def delete_case(self, case_id: str) -> bool:
+        """
+        删除案例及其所有关联数据
+
+        Args:
+            case_id: 案例 ID
+
+        Returns:
+            是否删除成功
+        """
+        case = self.db.get_case(case_id)
+        if not case:
+            return False
+        
+        # 删除文件存储
+        try:
+            case_dir = self.storage.get_case_dir(case_id)
+            if case_dir.exists():
+                import shutil
+                shutil.rmtree(case_dir)
+                logger.info(f"已删除案例目录: {case_dir}")
+        except Exception as e:
+            logger.warning(f"删除案例目录失败: {e}")
+        
+        # 删除数据库记录
+        return self.db.delete_case(case_id)
+
     def update_case_status(self, case_id: str, status: str) -> bool:
         """
         更新案例状态
