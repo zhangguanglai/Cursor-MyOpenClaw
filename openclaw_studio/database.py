@@ -218,12 +218,25 @@ class CaseDatabase:
     def delete_case(self, case_id: str) -> bool:
         """删除案例"""
         cursor = self.conn.cursor()
-        # 删除关联的数据（级联删除）
-        cursor.execute("DELETE FROM agent_runs WHERE case_id = ?", (case_id,))
-        cursor.execute("DELETE FROM test_records WHERE case_id = ?", (case_id,))
-        cursor.execute("DELETE FROM patches WHERE case_id = ?", (case_id,))
-        cursor.execute("DELETE FROM tasks WHERE case_id = ?", (case_id,))
-        cursor.execute("DELETE FROM plans WHERE case_id = ?", (case_id,))
+        
+        # 检查表是否存在并删除关联的数据（级联删除）
+        # 获取所有表名
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        existing_tables = {row[0] for row in cursor.fetchall()}
+        
+        # 删除关联的数据（只删除存在的表）
+        if 'agent_runs' in existing_tables:
+            cursor.execute("DELETE FROM agent_runs WHERE case_id = ?", (case_id,))
+        if 'test_records' in existing_tables:
+            cursor.execute("DELETE FROM test_records WHERE case_id = ?", (case_id,))
+        if 'patches' in existing_tables:
+            cursor.execute("DELETE FROM patches WHERE case_id = ?", (case_id,))
+        if 'tasks' in existing_tables:
+            cursor.execute("DELETE FROM tasks WHERE case_id = ?", (case_id,))
+        if 'plans' in existing_tables:
+            cursor.execute("DELETE FROM plans WHERE case_id = ?", (case_id,))
+        
+        # 最后删除案例本身
         cursor.execute("DELETE FROM cases WHERE id = ?", (case_id,))
         self.conn.commit()
         return cursor.rowcount > 0
