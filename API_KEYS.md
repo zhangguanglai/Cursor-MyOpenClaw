@@ -6,6 +6,7 @@
 - **环境变量名**: `QWEN_API_KEY`
 - **当前值**: `sk-fe321dca0bf146ca99df33876ad56bbb` (Qwen 3.5)
 - **用途**: 用于 planning、coding、summary 任务
+- **状态**: ✅ 已配置（2026-03-06）
 
 ### MiniMax API Key
 - **环境变量名**: `MINIMAX_API_KEY`
