@@ -80,13 +80,15 @@ async def trigger_planning(
         error_detail = str(e)
         error_traceback = traceback.format_exc()
         
+        # 记录详细错误日志
+        logger.error(f"Planning failed: {error_detail}\n{error_traceback}")
+        
         # 检查是否是 API Key 未配置的问题
         api_key_configured = bool(os.getenv('QWEN_API_KEY') or os.getenv('MINIMAX_API_KEY'))
         if not api_key_configured:
-            error_detail = "LLM API Key 未配置。请设置环境变量 QWEN_API_KEY 或 MINIMAX_API_KEY。"
-            logger.error(f"Planning failed: {error_detail}")
-        else:
-            logger.error(f"Planning failed: {error_detail}\n{error_traceback}")
+            error_detail = "LLM API Key 未配置。请设置环境变量 QWEN_API_KEY 或 MINIMAX_API_KEY，然后重启后端服务。"
+        elif "环境变量" in error_detail or "API Key" in error_detail or "QWEN_API_KEY" in error_detail or "MINIMAX_API_KEY" in error_detail:
+            error_detail = f"{error_detail} 请重启后端服务以加载新的环境变量。"
         
         raise HTTPException(
             status_code=500,
