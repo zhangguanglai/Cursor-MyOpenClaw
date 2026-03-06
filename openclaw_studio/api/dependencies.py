@@ -28,7 +28,17 @@ def get_llm_router() -> LLMRouter:
     """获取 LLMRouter 实例（单例）"""
     global _llm_router
     if _llm_router is None:
-        _llm_router = LLMRouter()
+        from openclaw_core.logger import get_logger
+        logger = get_logger("openclaw.api.dependencies")
+        logger.info("初始化 LLMRouter...")
+        try:
+            _llm_router = LLMRouter()
+            logger.info(f"LLMRouter 初始化成功，可用 Provider: {list(_llm_router.providers.keys())}")
+        except Exception as e:
+            logger.error(f"LLMRouter 初始化失败: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            raise
     return _llm_router
 
 
